@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>정책 계산기 · 무료 도구</title>
+<meta name="description" content="주택연금 월 수령액, 6+6 부모육아휴직급여, 건강보험 본인부담상한제 환급금을 공식 표 그대로 계산하는 무료 도구 모음입니다.">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: #f3f6fb; color: #0f172a; line-height: 1.55; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  .sub { color: #5b6b7c; font-size: 14px; margin: 0 0 22px; }
+  .card { display: block; background: #fff; border: 1px solid #dbe4f0; border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; text-decoration: none; color: inherit; }
+  .card:hover { border-color: #2563eb; }
+  .card .t { font-size: 17px; font-weight: 800; margin: 0 0 4px; color: #2563eb; }
+  .card .d { font-size: 14px; color: #334155; margin: 0; }
+  .foot { font-size: 12px; color: #5b6b7c; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧾 정책 계산기</h1>
+  <p class="sub">공식 표 그대로 계산합니다. 입력값은 브라우저 안에서만 계산되며 어디에도 전송되지 않습니다.</p>
+
+  <a class="card" href="/smartcalc/?preset=kr_housing_pension_2026">
+    <p class="t">주택연금 월 수령액</p>
+    <p class="d">한국주택금융공사 월지급금 예시(2026.03.01 기준)로 나이·주택가격별 월 수령액을 계산합니다.</p>
+  </a>
+  <a class="card" href="/smartcalc/?preset=kr_parental_leave_66_2025">
+    <p class="t">6+6 부모육아휴직급여</p>
+    <p class="d">고용24 육아휴직급여 제도안내 기준으로 통상임금·개월 수별 급여를 계산합니다.</p>
+  </a>
+  <a class="card" href="/smartcalc/?preset=kr_health_cost_cap_2025">
+    <p class="t">본인부담상한제 환급금</p>
+    <p class="d">국민건강보험공단 2025년도 본인부담상한액 기준으로 예상 환급금을 계산합니다.</p>
+  </a>
+
+  <p class="foot">참고용 계산이며 세무·금융 자문이 아닙니다. 정확한 금액은 각 기관에서 본인 조건으로 직접 확인하세요.<br>
+  출처와 계산 근거: <a href="/smartcalc/SOURCES.md">SOURCES.md</a></p>
+</div>
+</body>
+</html>

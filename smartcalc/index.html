@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>정책 계산기 — 주택연금 · 6+6 육아휴직 · 본인부담상한제</title>
+<meta name="description" content="주택연금 월 수령액, 6+6 부모육아휴직급여, 건강보험 본인부담상한제 환급금을 공식 표 그대로 계산합니다. 외부 서버로 전송되는 정보는 없습니다.">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; background: #f3f6fb; color: #0f172a; line-height: 1.55; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 22px; margin: 4px 0 6px; }
+  .sub { color: #5b6b7c; font-size: 14px; margin: 0 0 18px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { flex: 1; padding: 11px 6px; border: 2px solid #c2d4ef; border-radius: 12px; background: #fff; color: #0f172a; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .card { background: #fff; border: 1px solid #dbe4f0; border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 18px; margin: 0 0 4px; }
+  .card .desc { color: #5b6b7c; font-size: 14px; margin: 0 0 14px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+  input[type="number"], select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; background: #fff; color: #0f172a; }
+  .hint { font-size: 12px; color: #5b6b7c; margin: 4px 0 0; }
+  .check { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; font-size: 14px; }
+  .check input { width: 18px; height: 18px; margin-top: 2px; }
+  .result { background: #edf3ff; border: 1px solid #c2d4ef; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+  .result .k { font-size: 13px; color: #5b6b7c; margin: 0; }
+  .result .v { font-size: 28px; font-weight: 800; margin: 2px 0 8px; }
+  .result ul { margin: 0; padding-left: 18px; font-size: 14px; color: #334155; }
+  .warn { color: #a16207; font-size: 13px; margin: 10px 0 0; }
+  .bad { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+  .bad .t { font-weight: 800; color: #b42318; margin: 0 0 6px; }
+  .bad p { margin: 0; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  th { text-align: left; background: #edf3ff; padding: 8px 10px; border-bottom: 1px solid #dbe4f0; }
+  td { padding: 8px 10px; border-bottom: 1px solid #eef2f7; }
+  td.num { text-align: right; font-weight: 700; white-space: nowrap; }
+  .cases h3 { font-size: 15px; margin: 0 0 4px; }
+  .foot { font-size: 12px; color: #5b6b7c; margin-top: 8px; }
+  .foot a { color: #2563eb; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧾 정책 계산기</h1>
+  <p class="sub">공식 표 그대로 계산합니다. 입력값은 브라우저 안에서만 계산되며 어디에도 전송되지 않습니다.</p>
+
+  <div class="tabs" role="tablist" aria-label="계산기 선택">
+    <button type="button" role="tab" id="tab-pension" aria-selected="true" data-preset="kr_housing_pension_2026">주택연금</button>
+    <button type="button" role="tab" id="tab-leave" aria-selected="false" data-preset="kr_parental_leave_66_2025">6+6 육아휴직</button>
+    <button type="button" role="tab" id="tab-cap" aria-selected="false" data-preset="kr_health_cost_cap_2025">본인부담상한제</button>
+  </div>
+
+  <!-- ============ 주택연금 ============ -->
+  <section class="card" id="panel-pension" role="tabpanel" aria-labelledby="tab-pension">
+    <h2>주택연금 월 수령액</h2>
+    <p class="desc">한국주택금융공사 월지급금 예시(2026년 3월 1일 기준, 종신지급·정액형, 일반주택)를 그대로 계산합니다.</p>
+    <label for="hp-age">연소자 나이 (부부 중 어린 쪽, 만 나이)</label>
+    <input type="number" id="hp-age" min="40" max="100" step="1" value="70">
+    <label for="hp-declared">부부합산 공시가격 (원)</label>
+    <input type="number" id="hp-declared" min="0" max="3000000000" step="10000000" value="300000000">
+    <p class="hint">가입 여부는 공시가격 12억 원 이하가 갈라줍니다.</p>
+    <label for="hp-price">주택가격 — 시세·감정평가액 (원)</label>
+    <input type="number" id="hp-price" min="0" max="3000000000" step="10000000" value="300000000">
+    <p class="hint">월지급금은 시세·감정평가액 기준으로 산정합니다.</p>
+    <div id="hp-out"></div>
+    <div class="cases">
+      <h3>대표 케이스</h3>
+      <table>
+        <thead><tr><th>케이스</th><th style="text-align:right">월 수령액</th></tr></thead>
+        <tbody>
+          <tr><td>55세 · 3억 원</td><td class="num">468,000원</td></tr>
+          <tr><td>70세 · 3억 원</td><td class="num">923,000원</td></tr>
+          <tr><td>70세 · 12억 원 (상한 적용)</td><td class="num">3,414,000원</td></tr>
+          <tr><td>80세 · 12억 원 (상한 적용)</td><td class="num">4,060,000원</td></tr>
+        </tbody>
+      </table>
+      <p class="foot">70세·3억 원 기준 집 종류별 월지급금: 일반주택 92만 3천 원, 노인복지주택 78만 9천 원, 오피스텔 74만 6천 원.</p>
+    </div>
+  </section>
+
+  <!-- ============ 6+6 육아휴직 ============ -->
+  <section class="card" id="panel-leave" role="tabpanel" aria-labelledby="tab-leave" hidden>
+    <h2>6+6 부모육아휴직급여</h2>
+    <p class="desc">고용24 육아휴직급여 제도안내 기준. 6+6 특례는 자녀 생후 18개월 안에 부모 모두가 육아휴직을 사용할 때만 적용됩니다.</p>
+    <label for="lv-wage">통상임금 (월, 원)</label>
+    <input type="number" id="lv-wage" min="0" max="20000000" step="100000" value="5000000">
+    <p class="hint">상한·지급률의 기준은 육아휴직 시작일의 통상임금입니다.</p>
+    <label for="lv-months">육아휴직 개월 수</label>
+    <input type="number" id="lv-months" min="1" max="12" step="1" value="6">
+    <label class="check"><input type="checkbox" id="lv-both" checked> 부모 모두 생후 18개월 안에 육아휴직 사용 (6+6 특례)</label>
+    <div id="lv-out"></div>
+    <div class="cases">
+      <h3>대표 케이스</h3>
+      <table>
+        <thead><tr><th>케이스</th><th style="text-align:right">급여 합계</th></tr></thead>
+        <tbody>
+          <tr><td>통상임금 500만 원 · 6개월 (6+6)</td><td class="num">20,000,000원</td></tr>
+          <tr><td>통상임금 300만 원 · 6개월 (6+6)</td><td class="num">17,000,000원</td></tr>
+          <tr><td>통상임금 500만 원 · 12개월 (6+6)</td><td class="num">29,600,000원</td></tr>
+          <tr><td>통상임금 500만 원 · 6개월 (일반)</td><td class="num">13,500,000원</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 본인부담상한제 ============ -->
+  <section class="card" id="panel-cap" role="tabpanel" aria-labelledby="tab-cap" hidden>
+    <h2>본인부담상한제 환급금</h2>
+    <p class="desc">국민건강보험공단 2025년도 본인부담상한액(2025년 진료분) 기준. 연간 본인부담금이 상한액을 넘으면 초과분이 환급됩니다.</p>
+    <label for="cp-decile">건강보험료 소득분위</label>
+    <select id="cp-decile">
+      <option value="1" selected>1분위</option>
+      <option value="2">2분위</option>
+      <option value="3">3분위</option>
+      <option value="4">4분위</option>
+      <option value="5">5분위</option>
+      <option value="6">6분위</option>
+      <option value="7">7분위</option>
+      <option value="8">8분위</option>
+      <option value="9">9분위</option>
+      <option value="10">10분위</option>
+    </select>
+    <label for="cp-paid">연간 본인부담금 합계 (원)</label>
+    <input type="number" id="cp-paid" min="0" max="100000000" step="100000" value="2000000">
+    <label class="check"><input type="checkbox" id="cp-longterm"> 요양병원 120일 초과 입원</label>
+    <div id="cp-out"></div>
+    <div class="cases">
+      <h3>대표 케이스</h3>
+      <table>
+        <thead><tr><th>케이스</th><th style="text-align:right">환급금</th></tr></thead>
+        <tbody>
+          <tr><td>1분위 · 연간 200만 원</td><td class="num">1,110,000원</td></tr>
+          <tr><td>10분위 · 연간 1,000만 원</td><td class="num">1,740,000원</td></tr>
+          <tr><td>4분위 · 연간 170만 원 (상한 경계)</td><td class="num">0원</td></tr>
+          <tr><td>1분위 · 연간 200만 원 (요양병원 120일 초과)</td><td class="num">590,000원</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">출처: 한국주택금융공사 월지급금 예시(2026.03.01. 기준) · 고용24 육아휴직급여 제도안내(2026.11.23 확인) · 국민건강보험공단 2025년도 본인부담상한액(2025.01.07 안내). 참고용 계산이며 세무·금융 자문이 아닙니다. 정확한 금액은 각 기관에서 본인 조건으로 직접 확인하세요. 상담: 주택금융공사 1688-8114 · 국민건강보험공단 1577-1000.</p>
+</div>
+<script src="./calc.js"></script>
+<script>
+(function () {
+  "use strict";
+  var S = window.SMARTCALC;
+
+  function el(id) { return document.getElementById(id); }
+  function num(id) { var v = Number(el(id).value); return isFinite(v) ? v : 0; }
+
+  function resultHtml(label, headline, applied, extra) {
+    var h = '<div class="result"><p class="k">' + label + '</p><p class="v">' +
+      S.fmtKRW(headline) + '</p>';
+    if (extra) h += '<p class="warn">' + extra + '</p>';
+    if (applied && applied.length) {
+      h += '<ul>';
+      applied.slice(0, 3).forEach(function (line) { h += '<li>' + line + '</li>'; });
+      h += '</ul>';
+    }
+    return h + '</div>';
+  }
+
+  function badHtml(reason, alt) {
+    return '<div class="bad"><p class="t">적용 불가</p><p>' + reason + '</p>' +
+      (alt ? '<p style="margin-top:8px">대안: ' + alt + '</p>' : '') + '</div>';
+  }
+
+  function renderPension() {
+    var r = S.computeHousingPension(num("hp-age"), num("hp-declared"), num("hp-price"));
+    var out = el("hp-out");
+    if (!r.eligible) { out.innerHTML = badHtml(r.failReason, r.alternative); return; }
+    var extra = (r.snapNote ? r.snapNote : "") +
+      (r.caution ? (r.snapNote ? " " : "") + "⚠️ 주의: " + r.caution : "");
+    out.innerHTML = resultHtml("예상 월 수령액", r.monthly, r.applied, extra || null);
+  }
+
+  function renderLeave() {
+    var r = S.computeParentalLeave(num("lv-wage"), num("lv-months"), el("lv-both").checked);
+    var extra = (r.fallbackNote ? r.fallbackNote : "") +
+      (r.caution ? (r.fallbackNote ? " " : "") + "⚠️ 주의: " + r.caution : "");
+    var rows = r.rows.map(function (row) {
+      return '<tr><td>' + row.label + '</td><td class="num">' + S.fmtKRW(row.value) + '</td></tr>';
+    }).join("");
+    el("lv-out").innerHTML = resultHtml("예상 육아휴직급여 합계", r.total, r.applied, extra || null) +
+      '<table><thead><tr><th>월차</th><th style="text-align:right">월 급여</th></tr></thead><tbody>' +
+      rows + '</tbody></table>';
+  }
+
+  function renderCap() {
+    var r = S.computeHealthCap(Number(el("cp-decile").value), num("cp-paid"), el("cp-longterm").checked);
+    el("cp-out").innerHTML = resultHtml("예상 환급금", r.refund, r.applied,
+      r.caution ? "⚠️ 주의: " + r.caution : null);
+  }
+
+  var panels = {
+    kr_housing_pension_2026: { tab: "tab-pension", panel: "panel-pension", render: renderPension },
+    kr_parental_leave_66_2025: { tab: "tab-leave", panel: "panel-leave", render: renderLeave },
+    kr_health_cost_cap_2025: { tab: "tab-cap", panel: "panel-cap", render: renderCap }
+  };
+
+  function select(preset) {
+    if (!panels[preset]) preset = "kr_housing_pension_2026";
+    Object.keys(panels).forEach(function (key) {
+      var on = key === preset;
+      el(panels[key].tab).setAttribute("aria-selected", on ? "true" : "false");
+      el(panels[key].panel).hidden = !on;
+    });
+    panels[preset].render();
+    try { history.replaceState(null, "", "?preset=" + preset); } catch (e) { /* file:// */ }
+  }
+
+  Object.keys(panels).forEach(function (key) {
+    el(panels[key].tab).addEventListener("click", function () { select(key); });
+  });
+  ["hp-age", "hp-declared", "hp-price"].forEach(function (id) {
+    el(id).addEventListener("input", renderPension);
+  });
+  ["lv-wage", "lv-months"].forEach(function (id) {
+    el(id).addEventListener("input", renderLeave);
+  });
+  el("lv-both").addEventListener("change", renderLeave);
+  el("cp-decile").addEventListener("change", renderCap);
+  el("cp-paid").addEventListener("input", renderCap);
+  el("cp-longterm").addEventListener("change", renderCap);
+
+  var q = new URLSearchParams(window.location.search).get("preset");
+  select(q || "kr_housing_pension_2026");
+})();
+</script>
+</body>
+</html>
