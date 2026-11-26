@@ -75,7 +75,73 @@ Python == JS on the same vectors.
 - Rounding: 원 미만은 반올림 (Python math.floor(x + 0.5), JS same).
   공제대상가족 1명(본인만) 기준; 다른 가족 수에는 이 표를 쓰지 않는다.
 
+## Universal JSON spec mode (?spec=B<n>) — schema calc_spec/v1
+- A spec is data, not code: `calc.js` exposes `validateSpec`, `evaluateSpec`
+  (`computeFromSpec`) and `checkSpecVectors`, and runs a whitelist of
+  operations (const/var, +−×÷, compare, min/max/and/or, round/floor/ceil,
+  if, map/grid/bracket lookups, clamp). No `eval`, no `Function`, no property
+  path taken from the spec. An unknown op, table, variable or malformed node
+  throws, so a broken spec never renders a partly-wrong number.
+- Inputs may be number, select or toggle; eligibility gates replace the
+  number with a reason and an alternative; steps run in key order and may
+  only read earlier steps; outputs carry a headline, rows, applied lines and
+  one caution; `test_vectors` pin headline values and named step values.
+- The page loads `specs/B<n>.json` only when the URL says `?spec=B<n>`,
+  adds a fifth tab for it and leaves the four presets untouched.
+- Exit codes for the gate: `checkSpecVectors` returns `{ok, passed, total}`;
+  any vector that throws or deviates fails.
+
+## B423 — 자동차 취득세 감면 (광명시)
+- Local guide: 광명시청 차량등록 취득세 감면 안내
+  (https://www.gm.go.kr/pt/partInfo/tf/tf01/registration_costs/PTMN966.jsp,
+  checked 2026-11-26). 1차 법령 대조: 지방세법·지방세특례제한법 원문
+  (국가법령정보센터).
+- Rates (지방세법 제12조①2호, 시행 2026-01-01): 비영업용 승용 7%
+  (경자동차 4%), 그 밖의 비영업용(승합·화물) 5%, 이륜 125cc 이하 2%,
+  125cc 초과 5%. 자동차 취득세에는 지방교육세가 붙지 않는다
+  (지방세법 제150조 제1호가 자동차 취득세를 납세의무에서 제외);
+  농어촌특별세도 부과되지 않으므로 취득 단계 세금은 취득세 하나다.
+- 장애인 (지방세특례제한법 제17조): 장애 정도가 심한 장애인 등이
+  보철용·생업활동용으로 취득하고 취득세·자동차세 중 먼저 신청하는 1대를
+  2027-12-31까지 면제. 대상 차량: 배기량 2,000cc 이하 승용(6인승 이하),
+  7~10인승 승용, 15인승 이하 승합, 1톤 이하 화물, 250cc 이하 이륜.
+- 국가유공자 등 (제29조④): 국가유공자·5·18부상자·고엽제후유의증환자
+  1~7급(5·18은 1~14급)은 2027-12-31까지 100% 면제, 보훈보상대상자는 50%
+  경감. 같은 조문이 "제17조 감면을 받은 경우는 제외"라고 정해 장애인
+  감면과 겹쳐 받을 수 없다.
+- 다자녀 (제22조의2, 2027-12-31까지): 18세 미만 자녀 3명 이상은 취득세
+  면제 — 6인승 이하 승용은 산출세액 140만 원 이하 면제·초과 시 140만 원
+  공제, 7~10인승 승용·15인승 이하 승합·1톤 이하 화물·250cc 이하 이륜은
+  면제(최소납부제 적용). 2명은 50% 경감 — 6인승 이하 승용은 70만 원 한도,
+  그 밖의 차종은 한도 없음.
+- 최소납부제 (제177조의2①): 100% 면제 규정에도 85% 감면율을 적용하되,
+  ① 산출 취득세가 200만 원 이하면 전액 면제, ② 같은 항 제2호가
+  제17조·제29조를 열거하므로 장애인·국가유공자 감면은 200만 원을 넘어도
+  전액 면제. 제22조의2는 열거에 없어 200만 원 초과 다자녀 면제는 15%를
+  낸다 (광명시 예시②: 산출세액 300만 원 → 45만 원 납부 = 85% 감면).
+- 중복 감면 배제: 둘 이상의 감면 규정이 겹치면 감면율이 높은 하나만
+  적용한다(지방세특례제한법 중복감면 배제 원칙, 정부24 「장애인차량
+  취득세 및 자동차세 감면」 안내). 계산기는 대상자 감면과 다자녀 감면 중
+  큰 쪽 하나만 적용하고 그 사실을 화면에 적는다.
+- 추징: 등록일부터 1년 이내에 사망·혼인·해외이민·운전면허취소 같은
+  부득이한 사유 없이 소유권을 이전하거나 세대를 분가하면 감면액을
+  추징한다.
+- Test vectors (15, all hand-computed against the rules above, zero error on
+  the engine): V1 보훈보상 50% 3,000만 원 → 1,050,000원 · V2 중증 장애인
+  → 0원 · V3 2자녀 → 1,400,000원 · V4 3자녀 → 700,000원 · V5 7~10인승
+  산출세액 200만 원 경계 → 0원 · V6 산출세액 300만 원 → 450,000원 ·
+  V7 2자녀 승합 → 500,000원 · V8 중복 시 큰 쪽 → 700,000원 · V9 이륜
+  125cc 이하 → 0원 · V10/V11 게이트 · V12 2,000cc 초과 + 3자녀 →
+  700,000원 · V13 2,000cc 초과 + 장애인 → 2,100,000원 · V14/V15 140만 원
+  경계(2자녀 700,000원 / 3자녀 0원).
+
 ## What this calculator does NOT do
+- B423 covers 취득세 감면 only: 자동차세·등록면허세·공채 매입, 전기차
+  140만 원 감면, 경형자동차 75만 원 감면, 수소 화물차 50% 감면은 계산하지
+  않고 화면에도 넣지 않는다(전기차는 고시 목록 등재 여부 확인이 선행).
+- B423은 감면을 1대 기준으로 계산하고, 이미 감면을 받은 차량이 있는지는
+  사용자가 토글로 답한다(가구 전체 이력을 조회하지 않는다).
+- B423은 개인이 비영업용으로 취득하는 경우만 다룬다(영업용 4%는 미지원).
 - Off-table housing-pension inputs snap to the nearest published cell and say
   so; they are never interpolated.
 - House-type adjustment is shown only for the one published cell

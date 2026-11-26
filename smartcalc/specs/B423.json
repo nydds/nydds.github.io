@@ -1,0 +1,231 @@
+{
+  "schema": "calc_spec/v1",
+  "id": "B423",
+  "title": "자동차 취득세 감면 계산기",
+  "tab_label": "취득세 감면",
+  "description": "광명시 차량등록 취득세 감면 안내와 지방세특례제한법 제17조·제22조의2·제29조 그대로 계산합니다. 장애인·국가유공자 면제, 다자녀 감면, 15% 최소납부제까지 한 번에 확인합니다.",
+  "footnote": "출처: 광명시청 차량등록 취득세 감면 안내(2026-11-26 확인) · 지방세법 제12조·제150조·제177조의2 · 지방세특례제한법 제17조·제22조의2·제29조④. 참고용 계산이며 세무 자문이 아닙니다.",
+  "version": "2026-11-26",
+  "inputs": [
+    {
+      "key": "price",
+      "type": "number",
+      "label": "차량 가액 — 취득가격 (원)",
+      "default": 30000000,
+      "min": 0,
+      "max": 2000000000,
+      "step": 100000,
+      "hint": "취득세 과세표준입니다. 감면은 이 금액에 세율을 곱한 취득세에서 적용됩니다."
+    },
+    {
+      "key": "car_type",
+      "type": "select",
+      "label": "차량 구분 (비영업용)",
+      "default": "passenger_le2000",
+      "options": [
+        {"value": "passenger_le2000", "label": "승용 · 6인승 이하 · 2,000cc 이하 (7%)"},
+        {"value": "passenger_gt2000", "label": "승용 · 6인승 이하 · 2,000cc 초과 (7%)"},
+        {"value": "passenger_7to10", "label": "승용 · 7~10인승 (5%)"},
+        {"value": "van_le15", "label": "승합 · 15인승 이하 (5%)"},
+        {"value": "truck_le1t", "label": "화물 · 1톤 이하 (5%)"},
+        {"value": "twowheel_le125", "label": "이륜 · 125cc 이하 (2%)"},
+        {"value": "twowheel_le250", "label": "이륜 · 125cc 초과 250cc 이하 (5%)"},
+        {"value": "other", "label": "그 외 (감면 대상 아님)"}
+      ]
+    },
+    {
+      "key": "beneficiary",
+      "type": "select",
+      "label": "장애인·국가유공자 감면 대상",
+      "default": "none",
+      "options": [
+        {"value": "none", "label": "해당 없음"},
+        {"value": "severe_disability", "label": "장애 정도가 심한 장애인 — 100% 면제"},
+        {"value": "patriot_1_7", "label": "국가유공자 상이등급 1~7급 — 100% 면제"},
+        {"value": "patriot_5_18", "label": "5·18민주화운동부상자 1~14급 — 100% 면제"},
+        {"value": "agent_orange", "label": "고엽제후유의증환자 경도 이상 — 100% 면제"},
+        {"value": "veteran_comp", "label": "보훈보상대상자 상이등급 1~7급 — 50% 경감"}
+      ]
+    },
+    {
+      "key": "children",
+      "type": "number",
+      "label": "18세 미만 자녀 수",
+      "default": 0,
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "hint": "다자녀 감면은 2명 이상부터입니다. 양자와 배우자의 자녀를 포함합니다."
+    },
+    {
+      "key": "first_car",
+      "type": "toggle",
+      "label": "이번 차가 감면을 처음 신청하는 1대입니다",
+      "default": true,
+      "hint": "감면은 대상자별로 먼저 감면 신청하는 1대에만 적용됩니다."
+    }
+  ],
+  "eligibility_gates": [
+    {
+      "id": "vehicle_scope",
+      "when": {"op": "eq", "left": {"op": "var", "name": "car_type"}, "right": {"op": "const", "value": "other"}},
+      "reason": "이 차량은 취득세 감면 대상 차량이 아닙니다. 감면은 배기량 2,000cc 이하 승용(6인승 이하), 7~10인승 승용, 15인승 이하 승합, 1톤 이하 화물, 250cc 이하 이륜에만 적용됩니다.",
+      "alternative": "감면 대상이 아니면 취득세를 그대로 냅니다(승용 7%, 승합·화물 5%). 차량을 바꿀 수 있다면 감면 대상 차량 안에서 고르는 편이 낫습니다."
+    },
+    {
+      "id": "one_car",
+      "when": {"op": "not", "value": {"op": "var", "name": "first_car"}},
+      "reason": "감면은 먼저 감면 신청하는 1대에만 적용됩니다. 이미 감면 1대를 사용했다면 이 차는 전액 과세됩니다.",
+      "alternative": "가구 안에서 아직 감면을 쓰지 않은 차량이나 명의를 확인하세요. 장애인·국가유공자 감면과 다자녀 감면은 각각 따로 1대씩 신청할 수 있습니다."
+    }
+  ],
+  "tables": {
+    "rate": {
+      "type": "map",
+      "default": 0.05,
+      "rows": {
+        "passenger_le2000": 0.07,
+        "passenger_gt2000": 0.07,
+        "passenger_7to10": 0.05,
+        "van_le15": 0.05,
+        "truck_le1t": 0.05,
+        "twowheel_le125": 0.02,
+        "twowheel_le250": 0.05,
+        "other": 0.05
+      }
+    },
+    "small_scope": {
+      "type": "map",
+      "default": false,
+      "rows": {
+        "passenger_le2000": true,
+        "passenger_gt2000": true
+      }
+    },
+    "mch_scope": {
+      "type": "map",
+      "default": false,
+      "rows": {
+        "passenger_le2000": true,
+        "passenger_gt2000": true,
+        "passenger_7to10": true,
+        "van_le15": true,
+        "truck_le1t": true,
+        "twowheel_le125": true,
+        "twowheel_le250": true
+      }
+    },
+    "bene_scope": {
+      "type": "map",
+      "default": false,
+      "rows": {
+        "passenger_le2000": true,
+        "passenger_7to10": true,
+        "van_le15": true,
+        "truck_le1t": true,
+        "twowheel_le125": true,
+        "twowheel_le250": true
+      }
+    },
+    "beneficiary_rate": {
+      "type": "map",
+      "default": 0,
+      "rows": {
+        "none": 0,
+        "severe_disability": 1,
+        "patriot_1_7": 1,
+        "patriot_5_18": 1,
+        "agent_orange": 1,
+        "veteran_comp": 0.5
+      }
+    },
+    "beneficiary_label": {
+      "type": "map",
+      "default": "",
+      "rows": {
+        "severe_disability": "장애 정도가 심한 장애인",
+        "patriot_1_7": "국가유공자 1~7급",
+        "patriot_5_18": "5·18민주화운동부상자 1~14급",
+        "agent_orange": "고엽제후유의증환자",
+        "veteran_comp": "보훈보상대상자 1~7급"
+      }
+    },
+    "beneficiary_law": {
+      "type": "map",
+      "default": "",
+      "rows": {
+        "severe_disability": "지특법 제17조",
+        "patriot_1_7": "지특법 제29조④",
+        "patriot_5_18": "지특법 제29조④",
+        "agent_orange": "지특법 제29조④",
+        "veteran_comp": "지특법 제29조④"
+      }
+    }
+  },
+  "steps": {
+    "rate": {"op": "lookup", "table": "rate", "key": {"op": "var", "name": "car_type"}},
+    "base_tax": {"op": "round", "value": {"op": "mul", "left": {"op": "var", "name": "price"}, "right": {"op": "var", "name": "rate"}}},
+    "bene_rate": {"op": "lookup", "table": "beneficiary_rate", "key": {"op": "var", "name": "beneficiary"}},
+    "bene_scope": {"op": "lookup", "table": "bene_scope", "key": {"op": "var", "name": "car_type"}},
+    "bene_label": {"op": "lookup", "table": "beneficiary_label", "key": {"op": "var", "name": "beneficiary"}},
+    "bene_law": {"op": "lookup", "table": "beneficiary_law", "key": {"op": "var", "name": "beneficiary"}},
+    "want_bene": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "bene_rate"}, "right": {"op": "const", "value": 0}}, {"op": "var", "name": "bene_scope"}]},
+    "bene_benefit": {"op": "if", "cond": {"op": "var", "name": "want_bene"}, "then": {"op": "round", "value": {"op": "mul", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "var", "name": "bene_rate"}}}, "else": {"op": "const", "value": 0}},
+    "small_scope": {"op": "lookup", "table": "small_scope", "key": {"op": "var", "name": "car_type"}},
+    "mch_scope": {"op": "lookup", "table": "mch_scope", "key": {"op": "var", "name": "car_type"}},
+    "mch3_small": {"op": "if", "cond": {"op": "and", "values": [{"op": "ge", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 3}}, {"op": "var", "name": "small_scope"}]}, "then": {"op": "min", "values": [{"op": "var", "name": "base_tax"}, {"op": "const", "value": 1400000}]}, "else": {"op": "const", "value": 0}},
+    "mch3_other": {"op": "if", "cond": {"op": "and", "values": [{"op": "ge", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 3}}, {"op": "var", "name": "mch_scope"}, {"op": "not", "value": {"op": "var", "name": "small_scope"}}]}, "then": {"op": "if", "cond": {"op": "le", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 2000000}}, "then": {"op": "var", "name": "base_tax"}, "else": {"op": "round", "value": {"op": "mul", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 0.85}}}}, "else": {"op": "const", "value": 0}},
+    "mch2_small": {"op": "if", "cond": {"op": "and", "values": [{"op": "eq", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 2}}, {"op": "var", "name": "small_scope"}]}, "then": {"op": "min", "values": [{"op": "round", "value": {"op": "mul", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 0.5}}}, {"op": "const", "value": 700000}]}, "else": {"op": "const", "value": 0}},
+    "mch2_other": {"op": "if", "cond": {"op": "and", "values": [{"op": "eq", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 2}}, {"op": "var", "name": "mch_scope"}, {"op": "not", "value": {"op": "var", "name": "small_scope"}}]}, "then": {"op": "round", "value": {"op": "mul", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 0.5}}}, "else": {"op": "const", "value": 0}},
+    "mch_benefit": {"op": "max", "values": [{"op": "var", "name": "mch3_small"}, {"op": "var", "name": "mch3_other"}, {"op": "var", "name": "mch2_small"}, {"op": "var", "name": "mch2_other"}]},
+    "benefit": {"op": "max", "values": [{"op": "var", "name": "bene_benefit"}, {"op": "var", "name": "mch_benefit"}]},
+    "benefit_capped": {"op": "min", "values": [{"op": "var", "name": "benefit"}, {"op": "var", "name": "base_tax"}]},
+    "final_tax": {"op": "max", "values": [{"op": "sub", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "var", "name": "benefit_capped"}}, {"op": "const", "value": 0}]},
+    "edu_tax": {"op": "const", "value": 0},
+    "rural_tax": {"op": "const", "value": 0},
+    "total_pay": {"op": "add", "left": {"op": "var", "name": "final_tax"}, "right": {"op": "const", "value": 0}},
+    "mch_over_cap": {"op": "and", "values": [{"op": "var", "name": "mch_scope"}, {"op": "not", "value": {"op": "var", "name": "small_scope"}}, {"op": "ge", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 3}}, {"op": "gt", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 2000000}}]}
+  },
+  "outputs": {
+    "headline": {"label": "납부할 취득세", "value": {"op": "var", "name": "total_pay"}},
+    "rows": [
+      {"label": "차량 가액(과세표준)", "value": {"op": "var", "name": "price"}},
+      {"label": "적용 세율", "value": {"op": "var", "name": "rate"}, "format": "pct"},
+      {"label": "취득세 산출세액", "value": {"op": "var", "name": "base_tax"}},
+      {"label": "감면액", "value": {"op": "var", "name": "benefit_capped"}},
+      {"label": "납부할 취득세", "value": {"op": "var", "name": "final_tax"}},
+      {"label": "지방교육세(자동차 취득세는 미과세)", "value": {"op": "var", "name": "edu_tax"}},
+      {"label": "농어촌특별세(미과세)", "value": {"op": "var", "name": "rural_tax"}},
+      {"label": "최종 납부 합계", "value": {"op": "var", "name": "total_pay"}}
+    ],
+    "applied": [
+      {"text": "산출세액 {base_tax} = 차량 가액 {price} × 세율 {rate|pct}% (지방세법 제12조, 비영업용)"},
+      {"when": {"op": "gt", "left": {"op": "var", "name": "bene_benefit"}, "right": {"op": "const", "value": 0}}, "text": "{bene_label} 감면 {bene_benefit} 적용 — {bene_law}, 취득세의 {bene_rate|pct}%를 먼저 신청한 1대에 한정"},
+      {"when": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "var", "name": "small_scope"}, {"op": "ge", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 3}}]}, "text": "다자녀 감면 {mch_benefit} 적용 — 6인승 이하 승용 3자녀 이상, 산출세액에서 140만 원까지 감면"},
+      {"when": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "var", "name": "small_scope"}, {"op": "eq", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 2}}]}, "text": "다자녀 감면 {mch_benefit} 적용 — 6인승 이하 승용 2자녀, 50%에 70만 원 한도"},
+      {"when": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "not", "value": {"op": "var", "name": "small_scope"}}, {"op": "ge", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 3}}, {"op": "le", "left": {"op": "var", "name": "base_tax"}, "right": {"op": "const", "value": 2000000}}]}, "text": "다자녀 감면 {mch_benefit} 적용 — 승용 7~10인승·승합·화물·이륜, 3자녀 이상은 산출세액 200만 원 이하에서 전액 면제"},
+      {"when": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "not", "value": {"op": "var", "name": "small_scope"}}, {"op": "eq", "left": {"op": "var", "name": "children"}, "right": {"op": "const", "value": 2}}]}, "text": "다자녀 감면 {mch_benefit} 적용 — 승용 7~10인승·승합·화물·이륜 2자녀는 50% 감면(한도 없음)"},
+      {"when": {"op": "var", "name": "mch_over_cap"}, "text": "산출세액이 200만 원을 넘어 최소납부제(지특법 제177조의2)가 적용됩니다 — 85%만 감면되고 {final_tax}를 냅니다"},
+      {"when": {"op": "and", "values": [{"op": "eq", "left": {"op": "var", "name": "bene_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "eq", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}]}, "text": "적용 가능한 감면이 없습니다 — 산출세액 {base_tax}을 그대로 냅니다"},
+      {"when": {"op": "and", "values": [{"op": "gt", "left": {"op": "var", "name": "bene_benefit"}, "right": {"op": "const", "value": 0}}, {"op": "gt", "left": {"op": "var", "name": "mch_benefit"}, "right": {"op": "const", "value": 0}}]}, "text": "장애인·국가유공자 감면({bene_benefit})과 다자녀 감면({mch_benefit})은 겹쳐 받을 수 없어 큰 쪽 하나만 적용했습니다"}
+    ],
+    "caution": {"text": "감면은 차량 등록일부터 1년 안에 사망·혼인·해외이민·면허취소 같은 사유 없이 소유권을 이전하거나 세대를 분가하면 추징됩니다. 자동차 취득세에는 지방교육세·농어촌특별세가 붙지 않습니다. 감면 대상과 최종 고지액은 시·군·구 세무 부서에서 확인하세요."}
+  },
+  "test_vectors": [
+    {"name": "V1 보훈보상대상자 50% — 3,000만 원 승용", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "veteran_comp", "children": 0, "first_car": true}, "expect": {"eligible": true, "headline": 1050000, "values": {"base_tax": 2100000, "bene_benefit": 1050000, "benefit_capped": 1050000, "final_tax": 1050000}}},
+    {"name": "V2 중증 장애인 100% — 0원", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "severe_disability", "children": 0, "first_car": true}, "expect": {"eligible": true, "headline": 0, "values": {"base_tax": 2100000, "final_tax": 0}}},
+    {"name": "V3 2자녀 6인승 이하 — 70만 원 한도", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "none", "children": 2, "first_car": true}, "expect": {"eligible": true, "headline": 1400000, "values": {"base_tax": 2100000, "mch2_small": 700000, "benefit_capped": 700000, "final_tax": 1400000}}},
+    {"name": "V4 3자녀 6인승 이하 — 140만 원 한도", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "none", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 700000, "values": {"base_tax": 2100000, "mch3_small": 1400000, "final_tax": 700000}}},
+    {"name": "V5 3자녀 7~10인승 — 산출세액 200만 원 경계", "inputs": {"price": 40000000, "car_type": "passenger_7to10", "beneficiary": "none", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 0, "values": {"base_tax": 2000000, "mch3_other": 2000000, "final_tax": 0}}},
+    {"name": "V6 광명시 예시② 산출세액 300만 → 15% 45만", "inputs": {"price": 60000000, "car_type": "van_le15", "beneficiary": "none", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 450000, "values": {"base_tax": 3000000, "mch3_other": 2550000, "final_tax": 450000}}},
+    {"name": "V7 2자녀 승합 — 한도 없이 50%", "inputs": {"price": 20000000, "car_type": "van_le15", "beneficiary": "none", "children": 2, "first_car": true}, "expect": {"eligible": true, "headline": 500000, "values": {"base_tax": 1000000, "mch2_other": 500000, "final_tax": 500000}}},
+    {"name": "V8 중복 — 보훈 50%보다 다자녀 140만 원이 커서 다자녀만", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "veteran_comp", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 700000, "values": {"bene_benefit": 1050000, "mch_benefit": 1400000, "benefit_capped": 1400000, "final_tax": 700000}}},
+    {"name": "V9 이륜 125cc 이하 2% + 중증 장애인 — 0원", "inputs": {"price": 10000000, "car_type": "twowheel_le125", "beneficiary": "severe_disability", "children": 0, "first_car": true}, "expect": {"eligible": true, "headline": 0, "values": {"base_tax": 200000, "final_tax": 0}}},
+    {"name": "V10 게이트 — 감면 대상 차량 아님", "inputs": {"price": 30000000, "car_type": "other", "beneficiary": "severe_disability", "children": 3, "first_car": true}, "expect": {"eligible": false, "gate": "vehicle_scope"}},
+    {"name": "V11 게이트 — 감면 1대를 이미 사용", "inputs": {"price": 30000000, "car_type": "passenger_le2000", "beneficiary": "severe_disability", "children": 0, "first_car": false}, "expect": {"eligible": false, "gate": "one_car"}},
+    {"name": "V12 3자녀 승용 2,000cc 초과 — 다자녀는 배기량 무관", "inputs": {"price": 30000000, "car_type": "passenger_gt2000", "beneficiary": "none", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 700000, "values": {"base_tax": 2100000, "mch3_small": 1400000, "final_tax": 700000}}},
+    {"name": "V13 장애인 + 승용 2,000cc 초과 — 감면 대상 아님", "inputs": {"price": 30000000, "car_type": "passenger_gt2000", "beneficiary": "severe_disability", "children": 0, "first_car": true}, "expect": {"eligible": true, "headline": 2100000, "values": {"bene_benefit": 0, "final_tax": 2100000}}},
+    {"name": "V14 2자녀 6인승 이하 — 산출세액 140만 원 경계", "inputs": {"price": 20000000, "car_type": "passenger_le2000", "beneficiary": "none", "children": 2, "first_car": true}, "expect": {"eligible": true, "headline": 700000, "values": {"base_tax": 1400000, "mch2_small": 700000, "final_tax": 700000}}},
+    {"name": "V15 3자녀 6인승 이하 — 산출세액 140만 원 경계 전액 면제", "inputs": {"price": 20000000, "car_type": "passenger_le2000", "beneficiary": "none", "children": 3, "first_car": true}, "expect": {"eligible": true, "headline": 0, "values": {"base_tax": 1400000, "mch3_small": 1400000, "final_tax": 0}}}
+  ]
+}

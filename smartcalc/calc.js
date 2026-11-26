@@ -394,6 +394,459 @@
     };
   }
 
+  // =================================================================
+  // Universal declarative calculator engine — schema "calc_spec/v1"
+  // =================================================================
+  // A spec is data, never code: no eval, no Function, and no property
+  // path is ever taken from the spec. Every operation is on the
+  // whitelist below; an unknown op, table, variable or malformed node
+  // throws, so a broken spec can never render a partly-wrong number.
+  //
+  // Spec shape:
+  //   { schema, id, title, description, footnote,
+  //     inputs: [{key,type:number|select|toggle,label,default,min,max,step,hint,options}],
+  //     eligibility_gates: [{id,when,reason,alternative}],
+  //     tables: {name: map | grid | brackets},
+  //     steps: {name: node},            // evaluated in key order
+  //     outputs: {headline:{label,value,format}, rows:[{label,value,format}],
+  //               applied:[{when,text}], caution:{when,text}},
+  //     test_vectors: [{name,inputs,expect}] }
+  //
+  // Node shapes: {op:"const",value} | {op:"var",name} |
+  //   {op:"add|sub|mul|div|lt|le|gt|ge|eq|ne",left,right} |
+  //   {op:"min|max|and|or",values:[...]} | {op:"not|round|floor|ceil|abs|neg",value} |
+  //   {op:"if",cond,then,else} | {op:"lookup",table,key} |
+  //   {op:"lookup2",table,row,col} | {op:"bracket",table,value} |
+  //   {op:"clamp",value,min,max}
+  var SPEC_SCHEMA = "calc_spec/v1";
+  var SPEC_INPUT_TYPES = ["number", "select", "toggle"];
+  var SPEC_OPS = {
+    const: 1, var: 1, add: 1, sub: 1, mul: 1, div: 1,
+    lt: 1, le: 1, gt: 1, ge: 1, eq: 1, ne: 1,
+    min: 1, max: 1, and: 1, or: 1,
+    not: 1, round: 1, floor: 1, ceil: 1, abs: 1, neg: 1,
+    if: 1, lookup: 1, lookup2: 1, bracket: 1, clamp: 1
+  };
+  var SPEC_BINARY = { add: 1, sub: 1, mul: 1, div: 1, lt: 1, le: 1, gt: 1, ge: 1, eq: 1, ne: 1 };
+  var SPEC_LIST = { min: 1, max: 1, and: 1, or: 1 };
+  var SPEC_UNARY = { not: 1, round: 1, floor: 1, ceil: 1, abs: 1, neg: 1 };
+  var SPEC_NAME_RE = /^[a-z][a-z0-9_]{0,30}$/;
+
+  function specError(msg) {
+    var e = new Error("CALC_SPEC: " + msg);
+    e.name = "SpecError";
+    return e;
+  }
+  function specIsObj(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
+  function specIsNum(v) { return typeof v === "number" && isFinite(v); }
+  function specHas(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  function specRound(n) {
+    return n < 0 ? -Math.floor(-n + 0.5) : Math.floor(n + 0.5);
+  }
+  function specNum(v, op) {
+    if (!specIsNum(v)) throw specError(op + " needs numbers");
+    return v;
+  }
+  function specBool(v, op) {
+    if (typeof v !== "boolean") throw specError(op + " needs a true/false value");
+    return v;
+  }
+  function specPct(v) {
+    var p = Math.round(v * 1000000) / 10000;
+    return String(p);
+  }
+
+  function specTable(spec, name) {
+    var tables = spec.tables || {};
+    if (typeof name !== "string" || !specHas(tables, name)) {
+      throw specError("unknown table: " + name);
+    }
+    return tables[name];
+  }
+
+  function validateSpecTable(name, t) {
+    if (!specIsObj(t)) throw specError("table " + name + " must be an object");
+    if (t.type === "map") {
+      if (!specIsObj(t.rows) || !Object.keys(t.rows).length) throw specError("map table " + name + " needs rows");
+      Object.keys(t.rows).forEach(function (k) {
+        if (!specIsNum(t.rows[k]) && typeof t.rows[k] !== "boolean" && typeof t.rows[k] !== "string") {
+          throw specError("map table " + name + " row " + k + " must be a number, boolean or string");
+        }
+      });
+      if (specHas(t, "default") && !specIsNum(t["default"]) && typeof t["default"] !== "boolean" && typeof t["default"] !== "string") {
+        throw specError("map table " + name + " default has a bad type");
+      }
+    } else if (t.type === "grid") {
+      if (!Array.isArray(t.rows) || !Array.isArray(t.cols) || !Array.isArray(t.values)) throw specError("grid table " + name + " needs rows, cols, values");
+      if (!t.rows.length || !t.cols.length) throw specError("grid table " + name + " is empty");
+      if (t.values.length !== t.rows.length) throw specError("grid table " + name + " row count mismatch");
+      t.values.forEach(function (r) {
+        if (!Array.isArray(r) || r.length !== t.cols.length) throw specError("grid table " + name + " column count mismatch");
+        r.forEach(function (v) { if (!specIsNum(v)) throw specError("grid table " + name + " holds a non-number"); });
+      });
+    } else if (t.type === "brackets") {
+      if (!Array.isArray(t.rows) || !t.rows.length) throw specError("brackets table " + name + " needs rows");
+      var prev = 0;
+      t.rows.forEach(function (r, i) {
+        if (!specIsObj(r)) throw specError("brackets table " + name + " row " + i + " must be an object");
+        if (r.up_to !== null && !specIsNum(r.up_to)) throw specError("brackets table " + name + " row " + i + " needs up_to (number or null)");
+        if (!specIsNum(r.fixed)) throw specError("brackets table " + name + " row " + i + " needs fixed");
+        if (!specIsNum(r.rate)) throw specError("brackets table " + name + " row " + i + " needs rate");
+        if (i > 0 && r.up_to !== null && r.up_to <= prev) throw specError("brackets table " + name + " rows must ascend");
+        if (r.up_to === null && i !== t.rows.length - 1) throw specError("brackets table " + name + " open row must be last");
+        if (r.up_to !== null) prev = r.up_to;
+      });
+    } else {
+      throw specError("table " + name + " has unknown type " + t.type);
+    }
+  }
+
+  function validateSpecNode(node, names, spec, where) {
+    if (!specIsObj(node)) throw specError("node must be an object at " + where);
+    var op = node.op;
+    if (typeof op !== "string" || !specHas(SPEC_OPS, op)) throw specError("unknown op at " + where + ": " + op);
+    if (op === "const") {
+      if (!specIsNum(node.value) && typeof node.value !== "boolean" && typeof node.value !== "string") {
+        throw specError("const value must be a number, boolean or string at " + where);
+      }
+      return;
+    }
+    if (op === "var") {
+      if (typeof node.name !== "string" || !specHas(names, node.name)) {
+        throw specError("unknown variable at " + where + ": " + node.name);
+      }
+      return;
+    }
+    if (specHas(SPEC_BINARY, op)) {
+      validateSpecNode(node.left, names, spec, where + ".left");
+      validateSpecNode(node.right, names, spec, where + ".right");
+      return;
+    }
+    if (specHas(SPEC_LIST, op)) {
+      if (!Array.isArray(node.values) || !node.values.length) throw specError(op + " needs a non-empty values array at " + where);
+      node.values.forEach(function (v, i) { validateSpecNode(v, names, spec, where + ".values[" + i + "]"); });
+      return;
+    }
+    if (specHas(SPEC_UNARY, op)) {
+      validateSpecNode(node.value, names, spec, where + ".value");
+      return;
+    }
+    if (op === "if") {
+      validateSpecNode(node.cond, names, spec, where + ".cond");
+      validateSpecNode(node.then, names, spec, where + ".then");
+      validateSpecNode(node["else"], names, spec, where + ".else");
+      return;
+    }
+    if (op === "lookup" || op === "lookup2" || op === "bracket") {
+      var t = specTable(spec, node.table);
+      if (op === "lookup" && t.type !== "map") throw specError("lookup needs a map table at " + where);
+      if (op === "lookup2" && t.type !== "grid") throw specError("lookup2 needs a grid table at " + where);
+      if (op === "bracket" && t.type !== "brackets") throw specError("bracket needs a brackets table at " + where);
+      if (op === "lookup") validateSpecNode(node.key, names, spec, where + ".key");
+      if (op === "lookup2") {
+        validateSpecNode(node.row, names, spec, where + ".row");
+        validateSpecNode(node.col, names, spec, where + ".col");
+      }
+      if (op === "bracket") validateSpecNode(node.value, names, spec, where + ".value");
+      return;
+    }
+    if (op === "clamp") {
+      validateSpecNode(node.value, names, spec, where + ".value");
+      if (node.min !== undefined) validateSpecNode(node.min, names, spec, where + ".min");
+      if (node.max !== undefined) validateSpecNode(node.max, names, spec, where + ".max");
+    }
+  }
+
+  function validateSpec(spec) {
+    if (!specIsObj(spec)) throw specError("spec must be an object");
+    if (spec.schema !== SPEC_SCHEMA) throw specError("schema must be " + SPEC_SCHEMA);
+    if (typeof spec.id !== "string" || !/^[A-Za-z][A-Za-z0-9_-]{0,15}$/.test(spec.id)) throw specError("id must be 1-16 letters/digits");
+    if (typeof spec.title !== "string" || !spec.title) throw specError("title is required");
+    if (!Array.isArray(spec.inputs) || !spec.inputs.length) throw specError("inputs are required");
+    var names = {};
+    spec.inputs.forEach(function (inp, i) {
+      if (!specIsObj(inp)) throw specError("input " + i + " must be an object");
+      if (typeof inp.key !== "string" || !SPEC_NAME_RE.test(inp.key)) throw specError("bad input key at input " + i);
+      if (specHas(names, inp.key)) throw specError("duplicate input key " + inp.key);
+      names[inp.key] = true;
+      if (SPEC_INPUT_TYPES.indexOf(inp.type) < 0) throw specError("bad input type for " + inp.key);
+      if (typeof inp.label !== "string" || !inp.label) throw specError("input label required: " + inp.key);
+      if (inp.type === "select") {
+        if (!Array.isArray(inp.options) || inp.options.length < 2) throw specError("select needs 2+ options: " + inp.key);
+        var seen = {};
+        inp.options.forEach(function (o) {
+          if (!specIsObj(o) || typeof o.value !== "string" || !o.value) throw specError("bad option value in " + inp.key);
+          if (typeof o.label !== "string" || !o.label) throw specError("bad option label in " + inp.key);
+          if (specHas(seen, o.value)) throw specError("duplicate option " + o.value + " in " + inp.key);
+          seen[o.value] = true;
+        });
+        if (typeof inp["default"] !== "string" || !specHas(seen, inp["default"])) throw specError("select default is not an option: " + inp.key);
+      } else if (inp.type === "number") {
+        if (!specIsNum(inp["default"])) throw specError("number default required: " + inp.key);
+        if (inp.min !== undefined && !specIsNum(inp.min)) throw specError("bad min for " + inp.key);
+        if (inp.max !== undefined && !specIsNum(inp.max)) throw specError("bad max for " + inp.key);
+        if (inp.min !== undefined && inp["default"] < inp.min) throw specError("default below min: " + inp.key);
+        if (inp.max !== undefined && inp["default"] > inp.max) throw specError("default above max: " + inp.key);
+      } else if (typeof inp["default"] !== "boolean") {
+        throw specError("toggle default must be true/false: " + inp.key);
+      }
+    });
+
+    var tables = spec.tables || {};
+    Object.keys(tables).forEach(function (name) { validateSpecTable(name, tables[name]); });
+
+    (spec.eligibility_gates || []).forEach(function (g, i) {
+      if (!specIsObj(g)) throw specError("gate " + i + " must be an object");
+      if (typeof g.id !== "string" || !SPEC_NAME_RE.test(g.id)) throw specError("bad gate id at gate " + i);
+      if (typeof g.reason !== "string" || !g.reason) throw specError("gate " + g.id + " needs a reason");
+      if (g.alternative !== undefined && typeof g.alternative !== "string") throw specError("gate " + g.id + " alternative must be text");
+      validateSpecNode(g.when, names, spec, "gate." + g.id + ".when");
+    });
+
+    var steps = spec.steps || {};
+    Object.keys(steps).forEach(function (name) {
+      if (!SPEC_NAME_RE.test(name)) throw specError("bad step name: " + name);
+      if (specHas(names, name)) throw specError("step name clashes with an input: " + name);
+      validateSpecNode(steps[name], names, spec, "steps." + name);
+      names[name] = true;
+    });
+
+    if (!specIsObj(spec.outputs) || !specIsObj(spec.outputs.headline)) throw specError("outputs.headline is required");
+    if (typeof spec.outputs.headline.label !== "string" || !spec.outputs.headline.label) throw specError("headline label is required");
+    validateSpecNode(spec.outputs.headline.value, names, spec, "outputs.headline.value");
+    (spec.outputs.rows || []).forEach(function (r, i) {
+      if (!specIsObj(r) || typeof r.label !== "string" || !r.label) throw specError("row " + i + " needs a label");
+      validateSpecNode(r.value, names, spec, "outputs.rows[" + i + "].value");
+    });
+    (spec.outputs.applied || []).forEach(function (a, i) {
+      if (!specIsObj(a) || typeof a.text !== "string" || !a.text) throw specError("applied " + i + " needs text");
+      if (a.when !== undefined && a.when !== null) validateSpecNode(a.when, names, spec, "outputs.applied[" + i + "].when");
+    });
+    if (spec.outputs.caution !== undefined && spec.outputs.caution !== null) {
+      var c = spec.outputs.caution;
+      if (!specIsObj(c) || typeof c.text !== "string" || !c.text) throw specError("caution needs text");
+      if (c.when !== undefined && c.when !== null) validateSpecNode(c.when, names, spec, "outputs.caution.when");
+    }
+    return spec;
+  }
+
+  function evalSpecNode(node, scope, spec) {
+    var op = node.op;
+    if (op === "const") return node.value;
+    if (op === "var") return scope[node.name];
+    if (op === "add") return specNum(evalSpecNode(node.left, scope, spec), op) + specNum(evalSpecNode(node.right, scope, spec), op);
+    if (op === "sub") return specNum(evalSpecNode(node.left, scope, spec), op) - specNum(evalSpecNode(node.right, scope, spec), op);
+    if (op === "mul") return specNum(evalSpecNode(node.left, scope, spec), op) * specNum(evalSpecNode(node.right, scope, spec), op);
+    if (op === "div") {
+      var d = specNum(evalSpecNode(node.right, scope, spec), op);
+      if (d === 0) throw specError("division by zero");
+      return specNum(evalSpecNode(node.left, scope, spec), op) / d;
+    }
+    if (op === "min" || op === "max") {
+      var nums = node.values.map(function (v) { return specNum(evalSpecNode(v, scope, spec), op); });
+      return op === "min" ? Math.min.apply(Math, nums) : Math.max.apply(Math, nums);
+    }
+    if (op === "and" || op === "or") {
+      var bools = node.values.map(function (v) { return specBool(evalSpecNode(v, scope, spec), op); });
+      return op === "and" ? bools.every(function (b) { return b; }) : bools.some(function (b) { return b; });
+    }
+    if (op === "not") return !specBool(evalSpecNode(node.value, scope, spec), op);
+    if (op === "round") return specRound(specNum(evalSpecNode(node.value, scope, spec), op));
+    if (op === "floor") return Math.floor(specNum(evalSpecNode(node.value, scope, spec), op));
+    if (op === "ceil") return Math.ceil(specNum(evalSpecNode(node.value, scope, spec), op));
+    if (op === "abs") return Math.abs(specNum(evalSpecNode(node.value, scope, spec), op));
+    if (op === "neg") return -specNum(evalSpecNode(node.value, scope, spec), op);
+    if (op === "lt" || op === "le" || op === "gt" || op === "ge" || op === "eq" || op === "ne") {
+      var a = evalSpecNode(node.left, scope, spec);
+      var b = evalSpecNode(node.right, scope, spec);
+      if (specIsNum(a) !== specIsNum(b)) throw specError(op + " compares different types");
+      if (op === "lt") return a < b;
+      if (op === "le") return a <= b;
+      if (op === "gt") return a > b;
+      if (op === "ge") return a >= b;
+      if (op === "eq") return a === b;
+      return a !== b;
+    }
+    if (op === "if") {
+      return specBool(evalSpecNode(node.cond, scope, spec), op)
+        ? evalSpecNode(node.then, scope, spec)
+        : evalSpecNode(node["else"], scope, spec);
+    }
+    if (op === "lookup") {
+      var t = specTable(spec, node.table);
+      var key = evalSpecNode(node.key, scope, spec);
+      if (specIsNum(key)) key = String(specRound(key));
+      if (!specHas(t.rows, key)) {
+        if (specHas(t, "default")) return t["default"];
+        throw specError("table " + node.table + " has no row for " + key);
+      }
+      return t.rows[key];
+    }
+    if (op === "lookup2") {
+      var g = specTable(spec, node.table);
+      var rk = evalSpecNode(node.row, scope, spec);
+      var ck = evalSpecNode(node.col, scope, spec);
+      var ri = g.rows.indexOf(specIsNum(rk) ? specRound(rk) : rk);
+      var ci = g.cols.indexOf(specIsNum(ck) ? specRound(ck) : ck);
+      if (ri < 0 || ci < 0) {
+        if (specHas(g, "default")) return g["default"];
+        throw specError("table " + node.table + " has no cell for " + rk + "/" + ck);
+      }
+      return g.values[ri][ci];
+    }
+    if (op === "bracket") {
+      var bt = specTable(spec, node.table);
+      var v = specNum(evalSpecNode(node.value, scope, spec), op);
+      var lower = 0;
+      for (var i = 0; i < bt.rows.length; i++) {
+        var row = bt.rows[i];
+        if (row.up_to === null || v <= row.up_to) {
+          return row.fixed + (v - lower) * row.rate;
+        }
+        lower = row.up_to;
+      }
+      throw specError("bracket table " + node.table + " left the value uncovered");
+    }
+    if (op === "clamp") {
+      var cv = specNum(evalSpecNode(node.value, scope, spec), op);
+      if (node.min !== undefined) cv = Math.max(cv, specNum(evalSpecNode(node.min, scope, spec), op));
+      if (node.max !== undefined) cv = Math.min(cv, specNum(evalSpecNode(node.max, scope, spec), op));
+      return cv;
+    }
+    throw specError("unreachable op " + op);
+  }
+
+  function coerceSpecInput(inp, raw) {
+    if (inp.type === "number") {
+      var n = typeof raw === "number" ? raw : Number(String(raw === undefined || raw === null ? "" : raw).replace(/,/g, ""));
+      if (!isFinite(n)) n = inp["default"];
+      if (inp.min !== undefined && n < inp.min) n = inp.min;
+      if (inp.max !== undefined && n > inp.max) n = inp.max;
+      return n;
+    }
+    if (inp.type === "toggle") {
+      return raw === true || raw === 1 || raw === "1" || raw === "true" || raw === "on" || raw === "yes";
+    }
+    var val = raw === undefined || raw === null ? "" : String(raw);
+    for (var i = 0; i < inp.options.length; i++) {
+      if (inp.options[i].value === val) return val;
+    }
+    return inp["default"];
+  }
+
+  function specText(template, scope) {
+    return String(template).replace(/\{([a-z][a-z0-9_]*)(?:\|(raw|pct|krw))?\}/g, function (m, name, mod) {
+      if (!specHas(scope, name)) throw specError("unknown template variable " + name);
+      var v = scope[name];
+      if (mod === "raw") return String(v);
+      if (mod === "pct") return specPct(specNum(v, "pct"));
+      if (typeof v === "boolean") return v ? "예" : "아니오";
+      if (specIsNum(v)) return fmtKRW(v);
+      return String(v);
+    });
+  }
+
+  function formatSpecValue(v, format) {
+    if (format === "pct") return specPct(specNum(v, "pct")) + "%";
+    if (format === "raw") return String(v);
+    if (typeof v === "boolean") return v ? "예" : "아니오";
+    if (specIsNum(v)) return fmtKRW(v);
+    return String(v);
+  }
+
+  function evaluateSpec(spec, rawInputs) {
+    validateSpec(spec);
+    var scope = {};
+    spec.inputs.forEach(function (inp) {
+      var has = rawInputs && specHas(rawInputs, inp.key);
+      scope[inp.key] = coerceSpecInput(inp, has ? rawInputs[inp.key] : inp["default"]);
+    });
+    var gates = spec.eligibility_gates || [];
+    for (var gi = 0; gi < gates.length; gi++) {
+      if (specBool(evalSpecNode(gates[gi].when, scope, spec), "gate " + gates[gi].id)) {
+        return {
+          eligible: false, gate: gates[gi].id, spec_id: spec.id, title: spec.title,
+          failReason: gates[gi].reason,
+          alternative: gates[gi].alternative || null,
+          values: scope
+        };
+      }
+    }
+    var steps = spec.steps || {};
+    Object.keys(steps).forEach(function (name) {
+      scope[name] = evalSpecNode(steps[name], scope, spec);
+    });
+    var outs = spec.outputs;
+    var headline = {
+      label: outs.headline.label,
+      value: evalSpecNode(outs.headline.value, scope, spec),
+      format: outs.headline.format || "krw"
+    };
+    headline.text = formatSpecValue(headline.value, headline.format);
+    var rows = (outs.rows || []).map(function (r) {
+      var v = evalSpecNode(r.value, scope, spec);
+      return { label: r.label, value: v, format: r.format || "krw", text: formatSpecValue(v, r.format || "krw") };
+    });
+    var applied = (outs.applied || []).filter(function (a) {
+      return a.when === undefined || a.when === null || specBool(evalSpecNode(a.when, scope, spec), "applied.when");
+    }).map(function (a) { return specText(a.text, scope); });
+    var caution = null;
+    if (outs.caution && (outs.caution.when === undefined || outs.caution.when === null || specBool(evalSpecNode(outs.caution.when, scope, spec), "caution.when"))) {
+      caution = specText(outs.caution.text, scope);
+    }
+    return {
+      eligible: true, spec_id: spec.id, title: spec.title,
+      headline: headline, rows: rows, applied: applied, caution: caution,
+      values: scope
+    };
+  }
+
+  // Runs every test_vector in a spec against the engine. A vector may pin the
+  // headline, any named step value, the eligible flag and the gate id.
+  function checkSpecVectors(spec, cand) {
+    validateSpec(spec);
+    var vectors = cand || spec.test_vectors || [];
+    if (!Array.isArray(vectors) || !vectors.length) throw specError("test_vectors are required");
+    var results = [];
+    vectors.forEach(function (vec, i) {
+      var name = vec && vec.name ? String(vec.name) : "vector " + (i + 1);
+      var got;
+      try {
+        got = evaluateSpec(spec, vec.inputs || {});
+      } catch (e) {
+        results.push({ name: name, ok: false, detail: "threw: " + e.message });
+        return;
+      }
+      var exp = vec.expect || {};
+      var problems = [];
+      if (specHas(exp, "eligible") && got.eligible !== exp.eligible) {
+        problems.push("eligible got " + got.eligible + ", want " + exp.eligible);
+      }
+      if (specHas(exp, "gate") && got.gate !== exp.gate) {
+        problems.push("gate got " + got.gate + ", want " + exp.gate);
+      }
+      if (specHas(exp, "headline")) {
+        if (!got.eligible) problems.push("headline wanted but the spec is ineligible");
+        else if (got.headline.value !== exp.headline) {
+          problems.push("headline got " + got.headline.value + ", want " + exp.headline);
+        }
+      }
+      if (specHas(exp, "values")) {
+        Object.keys(exp.values).forEach(function (k) {
+          var want = exp.values[k];
+          var have = specHas(got.values, k) ? got.values[k] : undefined;
+          var tol = specHas(exp, "tolerance") ? exp.tolerance : 0;
+          if (!specIsNum(want)) problems.push(k + " expectation is not a number: " + want);
+          else if (!specIsNum(have)) problems.push(k + " is not numeric: " + have);
+          else if (Math.abs(have - want) > tol) problems.push(k + " got " + have + ", want " + want + " (tol " + tol + ")");
+        });
+      }
+      results.push({ name: name, ok: problems.length === 0, detail: problems.join("; ") });
+    });
+    var passed = results.filter(function (r) { return r.ok; }).length;
+    return { results: results, passed: passed, total: results.length, ok: passed === results.length };
+  }
+
   var api = {
     HF_ROWS: HF_ROWS, HF_COLS: HF_COLS, HF_VALUES: HF_VALUES,
     NHIS_BRACKETS: NHIS_BRACKETS,
@@ -403,7 +856,12 @@
     computeParentalLeave: computeParentalLeave,
     computeHealthCap: computeHealthCap,
     computeBonusWithholding: computeBonusWithholding,
-    fmtKRW: fmtKRW, fmtCompact: fmtCompact
+    fmtKRW: fmtKRW, fmtCompact: fmtCompact,
+    SPEC_SCHEMA: SPEC_SCHEMA,
+    validateSpec: validateSpec,
+    evaluateSpec: evaluateSpec,
+    computeFromSpec: evaluateSpec,
+    checkSpecVectors: checkSpecVectors
   };
 
   if (typeof module !== "undefined" && module.exports) {
