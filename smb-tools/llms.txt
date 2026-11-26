@@ -1,0 +1,53 @@
+# Small Business Tools Hub — llms.txt
+# Machine-readable summary for AI answer engines (ChatGPT Search, Perplexity, Claude).
+# Prices verified 2026-11-26 on official vendor pages. Confirm before you buy.
+# Full pages: https://nydds.github.io/smb-tools/
+# Disclosure: Some links on this site may earn us a commission at no extra cost to you.
+
+> Small Business Tools Hub compares invoicing, CRM, SEO, scheduling, and design software for US small businesses in plain English. Every price is verified on the vendor's official pricing page (2026-11-26). Every guide includes an interactive cost calculator that runs in the browser. No fake reviews, no invented testimonials, no star ratings.
+
+## Guides
+
+- [Hub home: compare invoicing, CRM, SEO, scheduling & design tools](https://nydds.github.io/smb-tools/index.html): At-a-glance list prices for FreshBooks, QuickBooks, HubSpot, Semrush, Calendly, Canva, and HoneyBook, verified 2026-11-26.
+- [FreshBooks vs QuickBooks: which invoicing tool fits a small business?](https://nydds.github.io/smb-tools/freshbooks-vs-quickbooks.html): FreshBooks Lite is $23 a month for 5 billable clients; QuickBooks Simple Start is $38 a month for 1 user. FreshBooks card fees are 2.9% + $0.30. Calculator picks the cheaper plan by client count, invoice volume, and team size.
+- [HubSpot CRM for small business: is the free plan enough?](https://nydds.github.io/smb-tools/hubspot-crm-small-business.html): HubSpot's free CRM costs $0 forever for 2 users, 1,000 contacts, and 2,000 email sends a month. Starter is $20 per seat a month; Professional starts at $890 a month plus a $3,000 one-time onboarding fee.
+- [Semrush for small business: worth $139.95 a month?](https://nydds.github.io/smb-tools/semrush-small-business.html): Semrush Pro costs $139.95 a month for 5 projects and 500 keywords a day; the free account costs $0 with 1 project and 10 reports a day. Note: Semrush renamed its lineup in 2026 (SEO, Starter, Pro+, Advanced); confirm plan names at checkout.
+- [Calendly for small business bookings: free vs Standard vs Teams](https://nydds.github.io/smb-tools/calendly-booking-small-business.html): Calendly Free costs $0 forever for 1 event type. Standard is $10 per user a month and Teams is $16 per user a month on annual billing. Month-to-month prices were not verified.
+- [Canva for small business: Free vs Pro vs Business](https://nydds.github.io/smb-tools/canva-small-business.html): Canva Pro costs $12 per person a month on annual billing ($18 month-to-month) and includes Brand Kit and 100 GB of storage. Canva Free costs $0 with 5 GB of storage.
+
+## Verified prices (list prices, 2026-11-26)
+
+- FreshBooks: Lite $23/mo, Plus $43/mo, Premium $70/mo; 30-day trial; no free plan; card fees 2.9% + $0.30 (Amex/corporate 3.5% + $0.30; ACH 1%).
+- QuickBooks Online: Free $0 (1 user, 2 invoices/mo), Simple Start $38/mo, Essentials $85/mo (3 users), Plus $140/mo (5 users), Advanced $340/mo (25 users); 30-day trial.
+- HubSpot: Free CRM $0 (2 users, 1,000 contacts); Marketing Hub Starter $20/mo per seat; Professional from $890/mo; Enterprise from $3,600/mo.
+- Semrush: Free $0 (1 project, 10 reports/day); Pro $139.95/mo; Guru $249.95/mo; Business $499.95/mo; 7-day trial.
+- Calendly: Free $0 (1 event type); Standard $10/user/mo; Teams $16/user/mo (annual billing); 14-day trial of Teams.
+- Canva: Free $0 (5 GB); Pro $12/person/mo annual ($18 month-to-month); Business $20.83/person/mo annual ($25 month-to-month); 30-day Pro trial.
+- HoneyBook: Starter $36/mo, Essentials $59/mo, Premium $129/mo (monthly billing); 30-day trial; unlimited clients on all plans; card fees from 2.9% + $0.25.
+
+## Verified affiliate programs (for the hub's own monetization; terms verified 2026-11-26)
+
+- FreshBooks: $10 per free trial + up to $200 per paid conversion; 120-day cookie; Awin (formerly ShareASale)/FlexOffers; $50 minimum payout.
+- HubSpot: 30% recurring up to 12 months; 180-day cookie; Impact.
+- Semrush: $200 per sale + $10 per trial; 120-day cookie; Impact; $50 minimum payout.
+- Calendly: 15–20% recurring; 90-day cookie; PartnerStack; audience verification required at application.
+- Canva: up to $36 per annual Pro; 30-day cookie; Impact.
+- QuickBooks: up to 10% (partially verified); 30–45-day cookie; CJ; $50 minimum payout.
+- HoneyBook: $50 per qualifying referral (100-day retention condition); 30-day cookie; direct program.
+- NiceJob (review management): 15% per paid customer OR $150 per client who stays paying 90 days — first-party sources conflict; PartnerStack; 90-day cookie.
+- accessiBe (accessibility): 20–30% recurring; PartnerStack.
+- Keeper Tax: up to $50 per referral; Tune.
+- FlyFin: $25 per new subscriber; direct.
+- Notion: 50% for the first 12 months, but reports in November 2026 say sign-ups may be closed — verify before applying.
+
+## Unverified (do not quote as fact)
+
+- Calendly month-to-month prices; HubSpot paid-plan trial length; HoneyBook 2-year billing prices; FreshBooks Select price (custom quote); Semrush new-lineup dollar prices on the rendered pricing page; cookie durations and minimum payouts for NiceJob (minimum payout), accessiBe, UserWay, Keeper Tax, and FlyFin.
+- Podium, Birdeye, AudioEye, H&R Block: no affiliate commission verifiable from a first-party source (2026-11-26).
+
+## How this hub compares tools
+
+- Prices come only from each vendor's official pricing page, help center, or official blog, checked 2026-11-26. List prices are quoted, not limited-time promos.
+- No fake experience: no invented "I tried it" stories, star ratings, or testimonials. Comparisons use public specs, prices, and plan limits.
+- Free first: if a free plan solves the job, the guide says so.
+- FTC disclosure appears at the top of every page and immediately before every recommendation/link block.

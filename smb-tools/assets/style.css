@@ -1,0 +1,59 @@
+/* SMB Tools Hub — shared stylesheet (static, no external dependencies) */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f3f6fb; color: #0f172a; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 56px; }
+a { color: #1d4ed8; }
+a:visited { color: #1e40af; }
+h1 { font-size: 26px; line-height: 1.25; margin: 6px 0 8px; }
+h2 { font-size: 21px; margin: 30px 0 8px; border-bottom: 2px solid #dbe4f0; padding-bottom: 6px; }
+h3 { font-size: 17px; margin: 20px 0 6px; }
+p { margin: 8px 0; }
+.lede { color: #475569; font-size: 16px; }
+.nav { font-size: 14px; color: #475569; margin-bottom: 8px; }
+.nav a { text-decoration: none; }
+.disclosure { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 12px; padding: 12px 14px; font-size: 14px; margin: 14px 0; }
+.disclosure strong { color: #92400e; }
+.answer { background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 0 12px 12px 0; padding: 14px 16px; margin: 16px 0; }
+.answer p { margin: 0; }
+.answer .label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #1d4ed8; margin-bottom: 4px; }
+.card { background: #fff; border: 1px solid #dbe4f0; border-radius: 16px; padding: 18px; margin: 16px 0; }
+.card h2 { border: 0; margin-top: 0; padding-bottom: 0; }
+.card h3 { margin-top: 0; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+th { background: #eff6ff; white-space: nowrap; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+td.best { font-weight: 700; color: #166534; }
+.checklist { padding-left: 20px; }
+.checklist li { margin: 6px 0; }
+label { display: block; font-size: 13px; font-weight: 700; margin: 12px 0 4px; }
+input[type="number"], input[type="range"], select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; background: #fff; color: #0f172a; }
+.hint { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+.result { background: #edf3ff; border: 1px solid #c2d4ef; border-radius: 12px; padding: 14px 16px; margin-top: 16px; }
+.result .k { font-size: 13px; color: #475569; margin: 0; }
+.result .v { font-size: 26px; font-weight: 800; margin: 2px 0 8px; }
+.result ul { margin: 0; padding-left: 18px; font-size: 14px; color: #334155; }
+.result table { margin: 8px 0 0; }
+.cta { display: inline-block; background: #2563eb; color: #fff !important; font-weight: 700; text-decoration: none; padding: 11px 18px; border-radius: 10px; margin: 6px 8px 6px 0; }
+.cta.secondary { background: #fff; color: #1d4ed8 !important; border: 2px solid #2563eb; }
+.cta:hover { opacity: .9; }
+.faq dt { font-weight: 700; margin: 12px 0 2px; }
+.faq dd { margin: 0 0 10px; }
+.sources { font-size: 13px; color: #475569; }
+.sources li { margin: 4px 0; word-break: break-word; }
+.foot { font-size: 12px; color: #64748b; margin-top: 28px; border-top: 1px solid #dbe4f0; padding-top: 14px; }
+.verdict { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+.verdict strong { color: #166534; }
+.warn { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+.warn strong { color: #b42318; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+.tile { background: #fff; border: 1px solid #dbe4f0; border-radius: 14px; padding: 16px; }
+.tile h3 { margin: 0 0 4px; }
+.tile h3 a { text-decoration: none; }
+.tile p { font-size: 14px; color: #475569; margin: 4px 0; }
+.tile .tag { display: inline-block; font-size: 12px; font-weight: 700; background: #eff6ff; color: #1d4ed8; border-radius: 999px; padding: 2px 9px; margin-bottom: 6px; }
+@media (max-width: 560px) {
+  h1 { font-size: 22px; }
+  .wrap { padding: 16px 12px 44px; }
+  .result .v { font-size: 22px; }
+}

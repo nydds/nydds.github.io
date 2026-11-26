@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendly for Small Business Bookings (2026): Free vs Standard vs Teams</title>
+<meta name="description" content="Calendly Free is $0 forever for one event type. Standard is $10 per user a month and Teams is $16 (annual billing). Compare plans and calculate your cost.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calendly for Small Business Bookings (2026): Free vs Standard vs Teams">
+<meta property="og:description" content="Calendly Free $0, Standard $10/user/mo, Teams $16/user/mo (annual billing). Verified prices and a cost calculator.">
+<meta property="og:url" content="https://nydds.github.io/smb-tools/calendly-booking-small-business.html">
+<link rel="stylesheet" href="assets/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://nydds.github.io/smb-tools/calendly-booking-small-business.html#webpage",
+      "url": "https://nydds.github.io/smb-tools/calendly-booking-small-business.html",
+      "name": "Calendly for Small Business Bookings (2026): Free vs Standard vs Teams",
+      "description": "Verified Calendly plan comparison for small businesses, with an interactive monthly cost calculator."
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://nydds.github.io/smb-tools/calendly-booking-small-business.html#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Calendly free for small business?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Calendly's free plan is $0 forever and includes 1 connected calendar, 1 event type, and unlimited one-to-one meetings. You pay only when you need more event types, group events, automations, or payment collection." }
+        },
+        {
+          "@type": "Question",
+          "name": "How much is Calendly Standard?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Standard is $10 per user a month on annual billing. Month-to-month prices were not rendered on Calendly's official pricing page when we checked on 2026-11-26, so we quote only the verified annual-billing figure." }
+        },
+        {
+          "@type": "Question",
+          "name": "When should a small business pay for Calendly?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Pay when one event type is not enough — for example, you offer both consultations and paid classes — or when you need group events, automated reminders, or Stripe and PayPal payments at booking time." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <p class="nav"><a href="./">Small Business Tools Hub</a> &rsaquo; Scheduling</p>
+  <h1>Calendly for small business bookings: free vs Standard vs Teams</h1>
+  <p class="lede">If you take one kind of booking — say, a 30-minute consultation — Calendly's free plan does the whole job for $0. You pay when you offer several kinds of appointments, run group sessions, or want to collect payment when someone books.</p>
+
+  <div class="disclosure"><strong>Disclosure:</strong> Some links on this page may earn us a commission at no extra cost to you. The comparison below uses prices verified on Calendly's own pages on 2026-11-26.</div>
+
+  <div class="answer">
+    <p class="label">The short answer</p>
+    <p>Calendly Free costs $0 forever for 1 calendar, 1 event type, and unlimited one-to-one meetings. Standard costs $10 per user a month on annual billing and adds unlimited event types, group events, and Stripe/PayPal payments. Teams costs $16 per user a month and adds round-robin scheduling.</p>
+  </div>
+
+  <div class="verdict"><strong>Our take:</strong> A solo consultant, tutor, or salon with one booking type should stay free. A business with 2–3 services and a team that shares bookings should pay for Standard — $10 per user a month is the cheapest paid tier on this hub after Canva Free.</div>
+
+  <h2>Plans and prices, verified 2026-11-26</h2>
+  <table>
+    <thead><tr><th>Plan</th><th class="num">Price (annual billing)</th><th>What you get</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Free</strong></td><td class="num">$0 forever</td><td>1 calendar · 1 event type · unlimited 1:1 meetings</td></tr>
+      <tr><td><strong>Standard</strong></td><td class="num">$10/user/mo</td><td>Unlimited event types · up to 6 calendars · group events · automations · Stripe/PayPal</td></tr>
+      <tr><td><strong>Teams</strong></td><td class="num">$16/user/mo</td><td>Everything in Standard · round-robin · routing forms · Salesforce</td></tr>
+      <tr><td><strong>Enterprise</strong></td><td class="num">From $15,000/yr</td><td>Custom — not a small-business tier</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Prices from Calendly's official blog and pricing page, verified 2026-11-26. Month-to-month prices for Standard and Teams did not render on the official pricing page in our check, so they are not quoted here — the figures above are annual-billing prices. A 14-day free trial of Teams features is offered and auto-downgrades to Free with no charge.</p>
+
+  <div class="card">
+    <h2>Calculator: your Calendly monthly cost</h2>
+    <p>Enter your team size and how many kinds of appointments you offer. The calculator follows Calendly's own limits: free for 1 event type, Standard at $10 per user a month (annual billing), Teams at $16 when you need round-robin or routing. All math runs in your browser — nothing is sent anywhere.</p>
+    <label for="ca-users">Team members who take bookings</label>
+    <input type="number" id="ca-users" min="1" max="100" step="1" value="1">
+    <label for="ca-types">Different kinds of appointments you offer</label>
+    <input type="number" id="ca-types" min="1" max="100" step="1" value="1">
+    <label for="ca-routing">Do you need round-robin or routing forms (shared team booking)?</label>
+    <select id="ca-routing">
+      <option value="no" selected>No — each person has their own booking page</option>
+      <option value="yes">Yes — bookings should route across the team</option>
+    </select>
+    <div class="result" id="ca-out" aria-live="polite"></div>
+    <p class="hint">Free: $0, 1 event type. Standard: $10/user/mo (annual billing). Teams: $16/user/mo (annual billing). Prices verified 2026-11-26. Month-to-month prices not verified.</p>
+  </div>
+
+  <div class="disclosure"><strong>Disclosure:</strong> The link below may earn us a commission at no extra cost to you. We recommend based on verified prices, not on commission rates.</div>
+  <p><a class="cta" data-aff-program="calendly" href="https://calendly.com/">Start with Calendly Free</a></p>
+
+  <h2>Checklist: free, Standard, or Teams?</h2>
+  <ul class="checklist">
+    <li>One service, one person, one booking page → <strong>Free ($0)</strong>.</li>
+    <li>Two or more services, or you take payments at booking → <strong>Standard ($10/user/mo)</strong>.</li>
+    <li>Customers book "the next available" person across a team → <strong>Teams ($16/user/mo)</strong>.</li>
+    <li>You only need a link that lets people pick a time → stay free; do not pay for features you will not use.</li>
+  </ul>
+
+  <h2>Frequently asked questions</h2>
+  <dl class="faq">
+    <dt>Is Calendly free for small business?</dt>
+    <dd>Yes. Calendly's free plan is $0 forever and includes 1 connected calendar, 1 event type, and unlimited one-to-one meetings. You pay only when you need more event types, group events, automations, or payment collection.</dd>
+    <dt>How much is Calendly Standard?</dt>
+    <dd>Standard is $10 per user a month on annual billing. Month-to-month prices were not rendered on Calendly's official pricing page when we checked on 2026-11-26, so we quote only the verified annual-billing figure.</dd>
+    <dt>When should a small business pay for Calendly?</dt>
+    <dd>Pay when one event type is not enough — for example, you offer both consultations and paid classes — or when you need group events, automated reminders, or Stripe and PayPal payments at booking time.</dd>
+  </dl>
+
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li>Calendly pricing — calendly.com/pricing (plan features, 14-day trial; verified 2026-11-26)</li>
+    <li>Calendly official blog — calendly.com/blog/appointment-scheduling-software (Free $0, Standard $10, Teams $16, Enterprise from $15,000/yr; verified 2026-11-26)</li>
+  </ul>
+
+  <div class="foot">
+    <p>Prices verified 2026-11-26 on official Calendly pages; confirm before you buy. Affiliate disclosure: some links may earn us a commission at no extra cost to you. This page is general information, not financial, tax, or legal advice.</p>
+    <p><a href="./">← Back to the hub</a> · <a href="llms.txt">llms.txt</a></p>
+  </div>
+</div>
+<script src="assets/aff.js"></script>
+<script>
+(function () {
+  function money(n) { return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+  function calc() {
+    var users = Math.max(1, +document.getElementById("ca-users").value || 1);
+    var types = Math.max(1, +document.getElementById("ca-types").value || 1);
+    var routing = document.getElementById("ca-routing").value === "yes";
+
+    var plan, monthly, note;
+    if (types <= 1 && !routing) {
+      plan = "Free"; monthly = 0;
+      note = "One event type and no team routing — the free plan covers you at $0.";
+    } else if (!routing) {
+      plan = "Standard"; monthly = 10 * users;
+      note = "Standard at $10 per user a month (annual billing) covers unlimited event types, group events, and Stripe/PayPal payments.";
+    } else {
+      plan = "Teams"; monthly = 16 * users;
+      note = "Round-robin and routing forms need Teams at $16 per user a month (annual billing).";
+    }
+    document.getElementById("ca-out").innerHTML =
+      '<p class="k">Estimated monthly cost (annual-billing prices, 2026-11-26)</p>' +
+      '<p class="v">' + plan + ' — ' + money(monthly) + '/mo</p>' +
+      '<ul><li>' + note + '</li>' +
+      '<li>14-day free trial of Teams features; it auto-downgrades to Free with no charge.</li>' +
+      '<li>Month-to-month prices were not verified — these figures are annual-billing prices.</li></ul>';
+  }
+  ["ca-users", "ca-types", "ca-routing"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", calc);
+    document.getElementById(id).addEventListener("change", calc);
+  });
+  calc();
+})();
+</script>
+</body>
+</html>
