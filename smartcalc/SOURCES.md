@@ -47,9 +47,39 @@ Python == JS on the same vectors.
   2,400,000 / 3,960,000 / 5,690,000 / 6,840,000 / 10,740,000원.
 - Refund = max(0, annual copayments − cap); actual burden = min(payments, cap).
 
+## Bonus withholding (상여금 원천징수) — 2026
+- Source: 소득세법 시행령 별표 2 근로소득 간이세액표 <개정 2026. 2. 27.>,
+  국가법령정보센터 file download flSeq=169813489
+  (https://www.law.go.kr/flDownload.do?gubun=&flSeq=169813489&bylClsCd=110201).
+  Full 11-column table archived in
+  code/r2/kr_simplified_withholding_2026.json; the preset uses the
+  공제대상가족 1명(본인만) column (646 rows: 770천원~10,000천원).
+- Formula: 소득세법 제136조 5단계 — 상여금 ÷ 지급기간 → 월급과 합산 →
+  간이세액표 룩업 → x 지급기간 → 월급분 원천징수 차감. Above 10,000천원 the
+  별표's own tiers apply ("10,000천원인 경우의 해당 세액" 1,507,400원 +
+  초과분 98% x 35%/38%/40%, then 40%/42%/45% without the 98% factor).
+- Verified against B108 (live post 411): 월급 450만 원·상여금 900만 원·
+  6개월 → 원천징수 1,458,360원; 1월 일시금 → 2,470,060원; 지방소득세
+  145,836원 (소득세의 10%); 고용보험료 81,000원 (상여금의 0.9%);
+  상여금 800만 원 시 4월 정산 325,391원 (건강 287,600원 + 장기요양 37,791원).
+- Health settlement (next April): 건강보험료율 7.19% (근로자 3.595%),
+  장기요양보험료 = 건강보험료의 13.14%. Monthly premium cap/floor:
+  보건복지부 「월별 건강보험료액의 상한과 하한에 관한 고시」 (2026-01-01
+  시행) — total 9,183,480원 / 20,160원 (employee half). Annual total capped
+  at 12 x the monthly cap (the 고시 states a monthly cap; the x12 annual
+  cap is this calculator's stated assumption).
+- Pension (guidance only, not computed): 국민연금 보험료는 상여금 지급 달에
+  변동 없음; 다음 해 7월 기준소득월액 재산정 때 반영. 2026년 보험료율 9.5%
+  (근로자 4.75%); 기준소득월액 2026.7.1~2027.6.30 하한 410,000원·상한
+  6,590,000원 (보건복지부 고시, law.go.kr flSeq=161404479).
+- Rounding: 원 미만은 반올림 (Python math.floor(x + 0.5), JS same).
+  공제대상가족 1명(본인만) 기준; 다른 가족 수에는 이 표를 쓰지 않는다.
+
 ## What this calculator does NOT do
 - Off-table housing-pension inputs snap to the nearest published cell and say
   so; they are never interpolated.
 - House-type adjustment is shown only for the one published cell
   (70세·3억 원). Other age/price/type combinations are not estimated.
 - No tax, legal or medical advice. All results are estimates for planning.
+- Bonus preset covers 공제대상가족 1명 (본인만) only; other family
+  counts need the full table (archived in the JSON next to the engine).

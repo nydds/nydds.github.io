@@ -10,6 +10,10 @@
  *   examples, 2026-03-01 basis (Tistory post 404 / B384).
  * - Parental leave 6+6: 고용24 육아휴직급여 제도안내 (2026-11-23).
  * - Health out-of-pocket cap: NHIS 2025 notice (2025-01-07).
+ * - Bonus withholding: 소득세법 시행령 별표 2 간이세액표
+ *   <개정 2026. 2. 27.> (law.go.kr flSeq=169813489) + 소득세법
+ *   제136조 5단계; health premium cap/floor per MOHW 고시
+ *   (2026-01-01, monthly total 9,183,480원 / 20,160원).
  */
 (function (root) {
   "use strict";
@@ -182,12 +186,223 @@
     };
   }
 
+
+  // Simplified withholding table (간이세액표), 2026. Source: 소득세법 시행령
+  // 별표 2 <개정 2026. 2. 27.> (law.go.kr flSeq=169813489), 공제대상가족 1명
+  // (본인만) column. Rows: [770, 1500)천원 in 5천원 steps (146 rows),
+  // [1500, 3000)천원 in 10천원 steps (150 rows), [3000, 10000)천원 in
+  // 20천원 steps (350 rows) — 646 rows total. Above 10,000천원 the 별표's
+  // own formula tiers apply (BONUS_OVER_10M). Never interpolate.
+  var BONUS_TABLE_2026 = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 1040, 1110,
+  1180, 1250, 1320, 1390, 1460, 1530, 1600, 1670, 1740, 1810,
+  1880, 1950, 2020, 2090, 2160, 2230, 2300, 2370, 2440, 2500,
+  2570, 2640, 2710, 2780, 2850, 2920, 2990, 3060, 3130, 3200,
+  3270, 3340, 3410, 3480, 3550, 3620, 3700, 3810, 3910, 4010,
+  4120, 4220, 4320, 4430, 4530, 4630, 4740, 4840, 4940, 5050,
+  5150, 5250, 5360, 5460, 5560, 5670, 5770, 5870, 5980, 6080,
+  6180, 6290, 6390, 6490, 6600, 6700, 6800, 6910, 7010, 7110,
+  7210, 7320, 7420, 7520, 7630, 7730, 7830, 7940, 8040, 8140,
+  8250, 8350, 8450, 8560, 8660, 8760, 8920, 9120, 9330, 9540,
+  9740, 9950, 10160, 10360, 10570, 10780, 10980, 11190, 11400, 11600,
+  11810, 12020, 12220, 12430, 12640, 12840, 13050, 13260, 13460, 13670,
+  13880, 14080, 14290, 14500, 14700, 14910, 15110, 15320, 15530, 15730,
+  15940, 16150, 16350, 16560, 16770, 16970, 17180, 17390, 17590, 17800,
+  18010, 18210, 18420, 18630, 18880, 19200, 19520, 19850, 20170, 20490,
+  20810, 21130, 21450, 21770, 22090, 22420, 22740, 23060, 23380, 23700,
+  24020, 24340, 24660, 24990, 25310, 25630, 25950, 26270, 26590, 26910,
+  27240, 27560, 27880, 28200, 28520, 28840, 29160, 29480, 29810, 30130,
+  30450, 30770, 31090, 31410, 31730, 32050, 32380, 32700, 33020, 33340,
+  33660, 33980, 34300, 34630, 34950, 35270, 35600, 35940, 36280, 36630,
+  36970, 37310, 37650, 38000, 38340, 38830, 39690, 40540, 41400, 42260,
+  43110, 43970, 44820, 45680, 46540, 47390, 48250, 49100, 49960, 50810,
+  51670, 52530, 53380, 54240, 55090, 55950, 56800, 57660, 58520, 59370,
+  60230, 61080, 61940, 62790, 63650, 64510, 65360, 66220, 67070, 67930,
+  68780, 69640, 70500, 71350, 72210, 73060, 74350, 76060, 77770, 79480,
+  81190, 82900, 84620, 86330, 88040, 89750, 91460, 93170, 95430, 97880,
+  100320, 102770, 105210, 107660, 110100, 112550, 114990, 117440, 119880, 122330,
+  124770, 127220, 129660, 132110, 134550, 137000, 139440, 141890, 144330, 146780,
+  149220, 151670, 154110, 156560, 163920, 166590, 169260, 171930, 174600, 177270,
+  179940, 182610, 185280, 187950, 190620, 193290, 195960, 198630, 201300, 203970,
+  206640, 209310, 211980, 214650, 217320, 219990, 222660, 225330, 228000, 230670,
+  233340, 236010, 238680, 241350, 244020, 246690, 249360, 252030, 254700, 257370,
+  260040, 262840, 265650, 268450, 271260, 276560, 279370, 282170, 284980, 287780,
+  290590, 293390, 296200, 299000, 301810, 304610, 307420, 310220, 313030, 315830,
+  318640, 321440, 324250, 327050, 329860, 332660, 335470, 338270, 341080, 343880,
+  346690, 349490, 352300, 355100, 357910, 360710, 363520, 366320, 369130, 371930,
+  374740, 377540, 380350, 383150, 385960, 388760, 391570, 394370, 397180, 399980,
+  402790, 405590, 408400, 411200, 414010, 416810, 419620, 422420, 425230, 428030,
+  430840, 433640, 436450, 439250, 442060, 444860, 447670, 450470, 470380, 475720,
+  478690, 483220, 487760, 492300, 496830, 501370, 505900, 510440, 514980, 519510,
+  524050, 528580, 533120, 537660, 542190, 546730, 551260, 555800, 560340, 564870,
+  569410, 573940, 578480, 583020, 587550, 592090, 596620, 601160, 605700, 610230,
+  614770, 619300, 623840, 628380, 632910, 637450, 641980, 646520, 651060, 655590,
+  660130, 664660, 669200, 673740, 678270, 682810, 687340, 691880, 696420, 700950,
+  705490, 710020, 714560, 719100, 723630, 728170, 732700, 737240, 741780, 746310,
+  750850, 755380, 759920, 764460, 768990, 773530, 778060, 782600, 787140, 791670,
+  796210, 800740, 805280, 809820, 814350, 818890, 823420, 827960, 832500, 837030,
+  841570, 846100, 850640, 855180, 859710, 864250, 868780, 873320, 877860, 882390,
+  886930, 891460, 896000, 900540, 905070, 909610, 914140, 918680, 923220, 927750,
+  932290, 936820, 941360, 945900, 950430, 954970, 959500, 964040, 968580, 973110,
+  977650, 982180, 986720, 991260, 995790, 1000330, 1004860, 1009400, 1013940, 1018470,
+  1023010, 1027540, 1032080, 1036740, 1041420, 1046100, 1050780, 1055460, 1060140, 1064820,
+  1069500, 1074180, 1078860, 1083540, 1088220, 1092900, 1097580, 1102260, 1106940, 1111620,
+  1116300, 1120980, 1125660, 1130340, 1135020, 1139700, 1144380, 1149060, 1153740, 1158420,
+  1163100, 1167780, 1172460, 1177140, 1181820, 1186500, 1191180, 1195860, 1200540, 1205220,
+  1209900, 1214580, 1219260, 1223940, 1228620, 1233300, 1237980, 1244640, 1251470, 1258290,
+  1265120, 1271940, 1278770, 1285590, 1292420, 1299240, 1306070, 1312890, 1319720, 1326540,
+  1333370, 1340190, 1347020, 1353840, 1360670, 1367490, 1374320, 1381140, 1387970, 1394790,
+  1401620, 1408440, 1415270, 1422090, 1428920, 1435740, 1442570, 1449390, 1456220, 1463040,
+  1469870, 1476690, 1483520, 1490340, 1497170, 1503990,
+  ];
+  // Above 10,000천원: [lower, upper, fixed won, rate %, apply 98% first].
+  // "10,000천원인 경우의 해당 세액" is 1,507,400원 (1명). Tiers are
+  // continuous at every boundary.
+  var BONUS_BASE_10M = 1507400;
+  var BONUS_OVER_10M = [
+    [10000000, 14000000, 25000, 35, true],
+    [14000000, 28000000, 1397000, 38, true],
+    [28000000, 30000000, 6610600, 40, true],
+    [30000000, 45000000, 7394600, 40, false],
+    [45000000, 87000000, 13394600, 42, false],
+    [87000000, Infinity, 31034600, 45, false]
+  ];
+  // 2026 rates (employee share). Health 7.19% total; long-term care is
+  // 13.14% of the health premium; employment insurance 0.9%; local income
+  // tax is 10% of income tax. Health premium cap/floor (MOHW 고시,
+  // 2026-01-01): monthly total 9,183,480원 / 20,160원.
+  var BONUS_HEALTH_RATE = 0.0719;
+  var BONUS_LTC_RATE = 0.1314;
+  var BONUS_EI_RATE = 0.009;
+  var BONUS_LOCAL_RATE = 0.10;
+  var BONUS_HEALTH_MONTHLY_CAP = 9183480;
+  var BONUS_HEALTH_MONTHLY_FLOOR = 20160;
+
+  function roundWon(n) { return Math.floor(n + 0.5); }
+
+  function lookupBonusMonthly(monthlyPay) {
+    var amount = roundWon(monthlyPay);
+    if (amount < 770000) return 0;
+    if (amount < 1500000) return BONUS_TABLE_2026[Math.floor((amount - 770000) / 5000)];
+    if (amount < 3000000) return BONUS_TABLE_2026[146 + Math.floor((amount - 1500000) / 10000)];
+    if (amount < 10000000) return BONUS_TABLE_2026[296 + Math.floor((amount - 3000000) / 20000)];
+    if (amount === 10000000) return BONUS_BASE_10M;
+    for (var i = 0; i < BONUS_OVER_10M.length; i++) {
+      var t = BONUS_OVER_10M[i];
+      if (amount <= t[1]) {
+        var excess = amount - t[0];
+        var add = t[4]
+          ? Math.floor((excess * 98 * t[3] + 5000) / 10000)
+          : Math.floor((excess * t[3] + 50) / 100);
+        return BONUS_BASE_10M + t[2] + add;
+      }
+    }
+    return BONUS_BASE_10M; // unreachable: last tier is unbounded
+  }
+
+  function bonusHealthSettlement(monthlySalary, bonus) {
+    var annualTotalPay = monthlySalary * 12 + bonus;
+    var annualPremium = Math.min(
+      Math.max(annualTotalPay * BONUS_HEALTH_RATE, 12 * BONUS_HEALTH_MONTHLY_FLOOR),
+      12 * BONUS_HEALTH_MONTHLY_CAP);
+    var monthlyPremium = Math.min(
+      Math.max(monthlySalary * BONUS_HEALTH_RATE, BONUS_HEALTH_MONTHLY_FLOOR),
+      BONUS_HEALTH_MONTHLY_CAP);
+    var paid = 12 * monthlyPremium;
+    var settlementTotal = annualPremium - paid;
+    var capped = annualTotalPay * BONUS_HEALTH_RATE > 12 * BONUS_HEALTH_MONTHLY_CAP ||
+      monthlySalary * BONUS_HEALTH_RATE > BONUS_HEALTH_MONTHLY_CAP;
+    var health = roundWon(settlementTotal / 2);
+    var ltc = roundWon(health * BONUS_LTC_RATE);
+    return { health: health, ltc: ltc, total: health + ltc, capped: capped };
+  }
+
+  function computeBonusWithholding(monthlySalary, bonus, months, payMonth) {
+    monthlySalary = Math.max(0, Number(monthlySalary) || 0);
+    bonus = Math.max(0, Number(bonus) || 0);
+    months = Math.max(1, Math.min(12, Math.round(Number(months) || 0)));
+    payMonth = (payMonth === 1 || payMonth === "1") ? 1 : 12;
+    var monthlyBonus = bonus / months;
+    var combined = roundWon(monthlySalary + monthlyBonus);
+    var tableCombined = lookupBonusMonthly(combined);
+    var tableMonthly = lookupBonusMonthly(monthlySalary);
+    var step4 = tableCombined * months;
+    var step5 = tableMonthly * months;
+    var withholding = Math.max(0, step4 - step5);
+    var localTax = roundWon(withholding * BONUS_LOCAL_RATE);
+    var ei = roundWon(bonus * BONUS_EI_RATE);
+    var immediate = withholding + localTax + ei;
+    var hs = bonusHealthSettlement(monthlySalary, bonus);
+    var altMonth = payMonth === 12 ? 1 : 12;
+    var altMonths = altMonth === 1 ? 1 : 12;
+    var altWithholding = Math.max(0,
+      lookupBonusMonthly(roundWon(monthlySalary + bonus / altMonths)) * altMonths -
+      tableMonthly * altMonths);
+    var altDiff = altWithholding - withholding;
+    var settleYear = payMonth === 12 ? "다음 해 4월" : "다다음 해 4월";
+    var altYear = payMonth === 12 ? "다다음 해 4월" : "다음 해 4월";
+    var applied = [];
+    applied.push("5단계 계산: 상여금 " + fmtKRW(bonus) + " ÷ " + months + "개월 = 월 " +
+      fmtKRW(roundWon(monthlyBonus)) + " → 월급과 합산 " + fmtKRW(combined) +
+      " → 간이세액표 " + fmtKRW(tableCombined) + " × " + months + "개월 = " +
+      fmtKRW(step4) + " → 월급분 " + fmtKRW(step5) + " 차감 → 원천징수 " + fmtKRW(withholding));
+    applied.push("지금 떼이는 돈 " + fmtKRW(immediate) + " = 소득세 " + fmtKRW(withholding) +
+      " + 지방소득세 " + fmtKRW(localTax) + " + 고용보험료 " + fmtKRW(ei));
+    var healthLine = settleYear + " 건보 정산 " + fmtKRW(hs.total) + "(건강 " + fmtKRW(hs.health) +
+      " + 장기요양 " + fmtKRW(hs.ltc) + ")";
+    if (hs.capped) {
+      healthLine += " — 보수월액 상한(월 보험료 9,183,480원) 적용으로 상여금 일부는 정산 대상에서 제외됩니다";
+    }
+    var compare;
+    if (altDiff > 0) {
+      compare = altMonth + "월에 받으면 원천징수 " + fmtKRW(altWithholding) + "으로 " +
+        fmtKRW(altDiff) + " 더 떼이고, 건보 정산은 " + altYear + "로 미뤄집니다";
+    } else if (altDiff < 0) {
+      compare = altMonth + "월에 받으면 원천징수 " + fmtKRW(altWithholding) + "으로 " +
+        fmtKRW(-altDiff) + " 덜 떼이고, 건보 정산은 " + altYear + "로 당겨집니다";
+    } else {
+      compare = altMonth + "월에 받아도 원천징수는 같습니다";
+    }
+    applied.push(healthLine + " · " + compare);
+    return {
+      eligible: true, withholding: withholding, localTax: localTax,
+      employmentInsurance: ei, immediateTotal: immediate,
+      health: hs.health, ltc: hs.ltc, healthTotal: hs.total, capped: hs.capped,
+      altWithholding: altWithholding, altDiff: altDiff, applied: applied,
+      rows: [
+        { label: "1단계 상여금 월 환산", value: roundWon(monthlyBonus) },
+        { label: "2단계 합산 월급여액", value: combined },
+        { label: "3단계 간이세액표 세액", value: tableCombined },
+        { label: "4단계 기간 곱", value: step4 },
+        { label: "5단계 월급분 차감", value: step5 },
+        { label: "원천징수 소득세", value: withholding },
+        { label: "지방소득세(소득세의 10%)", value: localTax },
+        { label: "고용보험료(상여금의 0.9%)", value: ei },
+        { label: "지금 떼이는 돈 합계", value: immediate },
+        { label: settleYear + " 건강보험 정산", value: hs.health },
+        { label: "장기요양보험료", value: hs.ltc },
+        { label: "4월 정산 합계", value: hs.total },
+        { label: altMonth + "월 지급 시 원천징수", value: altWithholding },
+        { label: "12월 vs 1월 원천징수 차이", value: altDiff }
+      ],
+      caution: "국민연금 보험료는 상여금 지급 달에 변동이 없습니다. 늘어난 소득은 다음 해 7월 기준소득월액 재산정 때 반영됩니다(2026년 7월~2027년 6월 기준 상한 659만 원·하한 41만 원). 원천징수는 선납 성격이라 최종 세액은 연말정산 때 1년 총급여 기준으로 확정됩니다."
+    };
+  }
+
   var api = {
     HF_ROWS: HF_ROWS, HF_COLS: HF_COLS, HF_VALUES: HF_VALUES,
     NHIS_BRACKETS: NHIS_BRACKETS,
+    BONUS_TABLE_2026: BONUS_TABLE_2026,
+    lookupBonusMonthly: lookupBonusMonthly,
     computeHousingPension: computeHousingPension,
     computeParentalLeave: computeParentalLeave,
     computeHealthCap: computeHealthCap,
+    computeBonusWithholding: computeBonusWithholding,
     fmtKRW: fmtKRW, fmtCompact: fmtCompact
   };
 

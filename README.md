@@ -6,7 +6,7 @@
 
 | 경로 | 내용 | 출처 |
 | --- | --- | --- |
-| `/smartcalc/` | 주택연금 월 수령액 · 6+6 부모육아휴직급여 · 본인부담상한제 환급금 계산기 | [smartcalc/SOURCES.md](smartcalc/SOURCES.md) |
+| `/smartcalc/` | 주택연금 월 수령액 · 6+6 부모육아휴직급여 · 본인부담상한제 환급금 · 상여금 원천징수·건강보험 정산 계산기 | [smartcalc/SOURCES.md](smartcalc/SOURCES.md) |
 
 - 전부 정적 파일(HTML/CSS/JS)입니다. 빌드 단계, 외부 라이브러리, CDN, 서버 호출이 없습니다.
 - 입력값은 브라우저 안에서만 계산되며 어디로도 전송되지 않습니다.
