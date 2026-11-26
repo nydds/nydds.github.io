@@ -22,7 +22,7 @@
     "nicejob":     { "url": "https://nicejob.com/",                           "label": "NiceJob — official site" },
     "accessibe":   { "url": "https://accessibe.com/",                         "label": "accessiBe — official site" },
     "userway":     { "url": "https://userway.org/",                           "label": "UserWay — official site" },
-    "keepertax":   { "url": "https://www.keepertax.com/",                     "label": "Keeper Tax — official site" },
+    "keepertax":   { "url": "https://keepertax.go2cloud.org/aff_c?offer_id=25&aff_id=2202",                     "label": "Keeper Tax — official site" },
     "flyfin":      { "url": "https://flyfin.tax/",                            "label": "FlyFin — official site" }
   };
 
