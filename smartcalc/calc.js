@@ -68,6 +68,9 @@
   function fmtKRW(n) {
     return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "원";
   }
+  function fmtUSD(n) {
+    return "$" + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 
   function fmtCompact(n) {
     if (n >= 100000000) {
@@ -413,7 +416,7 @@
   //     test_vectors: [{name,inputs,expect}] }
   //
   // Node shapes: {op:"const",value} | {op:"var",name} |
-  //   {op:"add|sub|mul|div|lt|le|gt|ge|eq|ne",left,right} |
+  //   {op:"add|sub|mul|div|pow|lt|le|gt|ge|eq|ne",left,right} |
   //   {op:"min|max|and|or",values:[...]} | {op:"not|round|floor|ceil|abs|neg",value} |
   //   {op:"if",cond,then,else} | {op:"lookup",table,key} |
   //   {op:"lookup2",table,row,col} | {op:"bracket",table,value} |
@@ -421,13 +424,13 @@
   var SPEC_SCHEMA = "calc_spec/v1";
   var SPEC_INPUT_TYPES = ["number", "select", "toggle"];
   var SPEC_OPS = {
-    const: 1, var: 1, add: 1, sub: 1, mul: 1, div: 1,
+    const: 1, var: 1, add: 1, sub: 1, mul: 1, div: 1, pow: 1,
     lt: 1, le: 1, gt: 1, ge: 1, eq: 1, ne: 1,
     min: 1, max: 1, and: 1, or: 1,
     not: 1, round: 1, floor: 1, ceil: 1, abs: 1, neg: 1,
     if: 1, lookup: 1, lookup2: 1, bracket: 1, clamp: 1
   };
-  var SPEC_BINARY = { add: 1, sub: 1, mul: 1, div: 1, lt: 1, le: 1, gt: 1, ge: 1, eq: 1, ne: 1 };
+  var SPEC_BINARY = { add: 1, sub: 1, mul: 1, div: 1, pow: 1, lt: 1, le: 1, gt: 1, ge: 1, eq: 1, ne: 1 };
   var SPEC_LIST = { min: 1, max: 1, and: 1, or: 1 };
   var SPEC_UNARY = { not: 1, round: 1, floor: 1, ceil: 1, abs: 1, neg: 1 };
   var SPEC_NAME_RE = /^[a-z][a-z0-9_]{0,30}$/;
@@ -642,6 +645,7 @@
       if (d === 0) throw specError("division by zero");
       return specNum(evalSpecNode(node.left, scope, spec), op) / d;
     }
+    if (op === "pow") return Math.pow(specNum(evalSpecNode(node.left, scope, spec), op), specNum(evalSpecNode(node.right, scope, spec), op));
     if (op === "min" || op === "max") {
       var nums = node.values.map(function (v) { return specNum(evalSpecNode(v, scope, spec), op); });
       return op === "min" ? Math.min.apply(Math, nums) : Math.max.apply(Math, nums);
@@ -735,11 +739,12 @@
   }
 
   function specText(template, scope) {
-    return String(template).replace(/\{([a-z][a-z0-9_]*)(?:\|(raw|pct|krw))?\}/g, function (m, name, mod) {
+    return String(template).replace(/\{([a-z][a-z0-9_]*)(?:\|(raw|pct|krw|usd))?\}/g, function (m, name, mod) {
       if (!specHas(scope, name)) throw specError("unknown template variable " + name);
       var v = scope[name];
       if (mod === "raw") return String(v);
       if (mod === "pct") return specPct(specNum(v, "pct"));
+      if (mod === "usd") return fmtUSD(specNum(v, "usd"));
       if (typeof v === "boolean") return v ? "예" : "아니오";
       if (specIsNum(v)) return fmtKRW(v);
       return String(v);
@@ -748,6 +753,7 @@
 
   function formatSpecValue(v, format) {
     if (format === "pct") return specPct(specNum(v, "pct")) + "%";
+    if (format === "usd") return fmtUSD(specNum(v, "usd"));
     if (format === "raw") return String(v);
     if (typeof v === "boolean") return v ? "예" : "아니오";
     if (specIsNum(v)) return fmtKRW(v);
@@ -856,7 +862,7 @@
     computeParentalLeave: computeParentalLeave,
     computeHealthCap: computeHealthCap,
     computeBonusWithholding: computeBonusWithholding,
-    fmtKRW: fmtKRW, fmtCompact: fmtCompact,
+    fmtKRW: fmtKRW, fmtUSD: fmtUSD, fmtCompact: fmtCompact,
     SPEC_SCHEMA: SPEC_SCHEMA,
     validateSpec: validateSpec,
     evaluateSpec: evaluateSpec,

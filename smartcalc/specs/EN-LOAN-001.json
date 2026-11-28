@@ -1,0 +1,569 @@
+{
+  "description": "Compare the fixed monthly payment on the same loan at two different annual rates. Standard amortization formula M = P x r / (1 - (1 + r)^-n), where r is the monthly rate (annual rate / 12 / 100) and n is the term in months; a 0% rate pays P / n. Payments are rounded to the nearest cent.",
+  "eligibility_gates": [
+    {
+      "id": "lower_rate_b",
+      "when": {
+        "op": "ge",
+        "left": {
+          "op": "var",
+          "name": "rate_b"
+        },
+        "right": {
+          "op": "var",
+          "name": "rate_a"
+        }
+      },
+      "reason": "Rate B is not lower than rate A, so switching to rate B saves nothing per month.",
+      "alternative": "Enter a rate B below rate A to see the savings."
+    },
+    {
+      "id": "positive_loan",
+      "when": {
+        "op": "le",
+        "left": {
+          "op": "var",
+          "name": "loan_amount"
+        },
+        "right": {
+          "op": "const",
+          "value": 0
+        }
+      },
+      "reason": "Enter a loan amount above $0.",
+      "alternative": "Enter your loan amount."
+    }
+  ],
+  "id": "EN-LOAN-001",
+  "inputs": [
+    {
+      "default": 25000,
+      "key": "loan_amount",
+      "label": "Loan amount ($)",
+      "max": 10000000,
+      "min": 0,
+      "step": 100,
+      "type": "number"
+    },
+    {
+      "default": 7.5,
+      "key": "rate_a",
+      "label": "Rate A — current APR (%)",
+      "max": 30,
+      "min": 0,
+      "step": 0.01,
+      "type": "number"
+    },
+    {
+      "default": 5.9,
+      "key": "rate_b",
+      "label": "Rate B — new APR (%)",
+      "max": 30,
+      "min": 0,
+      "step": 0.01,
+      "type": "number"
+    },
+    {
+      "default": 60,
+      "key": "term_months",
+      "label": "Term (months)",
+      "max": 480,
+      "min": 1,
+      "step": 1,
+      "type": "number"
+    }
+  ],
+  "outputs": {
+    "applied": [
+      {
+        "text": "At rate A you pay {pay_a|usd} a month; at rate B you pay {pay_b|usd} a month."
+      },
+      {
+        "text": "Choosing rate B saves {monthly_saving|usd} a month — {total_saving|usd} over {term_months|raw} months."
+      }
+    ],
+    "caution": {
+      "text": "Principal and interest only, fixed rate, equal monthly payments, standard amortization formula M = P x r / (1 - (1 + r)^-n), rounded to the nearest cent. Taxes, insurance, fees, and variable-rate changes are not included; your lender's quote is authoritative. Not financial advice."
+    },
+    "headline": {
+      "label": "Monthly savings with rate B",
+      "value": {
+        "op": "var",
+        "name": "monthly_saving"
+      },
+      "format": "usd"
+    },
+    "rows": [
+      {
+        "label": "Loan amount",
+        "value": {
+          "op": "var",
+          "name": "loan_amount"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Monthly payment at rate A",
+        "value": {
+          "op": "var",
+          "name": "pay_a"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Monthly payment at rate B",
+        "value": {
+          "op": "var",
+          "name": "pay_b"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Monthly savings",
+        "value": {
+          "op": "var",
+          "name": "monthly_saving"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Total savings over the term",
+        "value": {
+          "op": "var",
+          "name": "total_saving"
+        },
+        "format": "usd"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "label": "Standard amortization formula M = P x r / (1 - (1 + r)^-n) — CampusDown loan calculator",
+      "url": "https://campusdown.com/en/calc/loan"
+    },
+    {
+      "label": "Loan amortization and the standard payment formula — Chase mortgage education",
+      "url": "https://www.chase.com/personal/mortgage/education/financing-a-home/loan-amortization"
+    }
+  ],
+  "steps": {
+    "neg_n": {
+      "op": "neg",
+      "value": {
+        "op": "var",
+        "name": "term_months"
+      }
+    },
+    "r_a": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "rate_a"
+      },
+      "right": {
+        "op": "const",
+        "value": 1200
+      }
+    },
+    "base_a": {
+      "op": "add",
+      "left": {
+        "op": "const",
+        "value": 1
+      },
+      "right": {
+        "op": "var",
+        "name": "r_a"
+      }
+    },
+    "pow_a": {
+      "op": "pow",
+      "left": {
+        "op": "var",
+        "name": "base_a"
+      },
+      "right": {
+        "op": "var",
+        "name": "neg_n"
+      }
+    },
+    "denom_a": {
+      "op": "sub",
+      "left": {
+        "op": "const",
+        "value": 1
+      },
+      "right": {
+        "op": "var",
+        "name": "pow_a"
+      }
+    },
+    "numer_a": {
+      "op": "mul",
+      "left": {
+        "op": "var",
+        "name": "loan_amount"
+      },
+      "right": {
+        "op": "var",
+        "name": "r_a"
+      }
+    },
+    "pay_a_raw": {
+      "op": "if",
+      "cond": {
+        "op": "eq",
+        "left": {
+          "op": "var",
+          "name": "rate_a"
+        },
+        "right": {
+          "op": "const",
+          "value": 0
+        }
+      },
+      "then": {
+        "op": "div",
+        "left": {
+          "op": "var",
+          "name": "loan_amount"
+        },
+        "right": {
+          "op": "var",
+          "name": "term_months"
+        }
+      },
+      "else": {
+        "op": "div",
+        "left": {
+          "op": "var",
+          "name": "numer_a"
+        },
+        "right": {
+          "op": "var",
+          "name": "denom_a"
+        }
+      }
+    },
+    "pay_a_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "pay_a_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "pay_a": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "pay_a_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "r_b": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "rate_b"
+      },
+      "right": {
+        "op": "const",
+        "value": 1200
+      }
+    },
+    "base_b": {
+      "op": "add",
+      "left": {
+        "op": "const",
+        "value": 1
+      },
+      "right": {
+        "op": "var",
+        "name": "r_b"
+      }
+    },
+    "pow_b": {
+      "op": "pow",
+      "left": {
+        "op": "var",
+        "name": "base_b"
+      },
+      "right": {
+        "op": "var",
+        "name": "neg_n"
+      }
+    },
+    "denom_b": {
+      "op": "sub",
+      "left": {
+        "op": "const",
+        "value": 1
+      },
+      "right": {
+        "op": "var",
+        "name": "pow_b"
+      }
+    },
+    "numer_b": {
+      "op": "mul",
+      "left": {
+        "op": "var",
+        "name": "loan_amount"
+      },
+      "right": {
+        "op": "var",
+        "name": "r_b"
+      }
+    },
+    "pay_b_raw": {
+      "op": "if",
+      "cond": {
+        "op": "eq",
+        "left": {
+          "op": "var",
+          "name": "rate_b"
+        },
+        "right": {
+          "op": "const",
+          "value": 0
+        }
+      },
+      "then": {
+        "op": "div",
+        "left": {
+          "op": "var",
+          "name": "loan_amount"
+        },
+        "right": {
+          "op": "var",
+          "name": "term_months"
+        }
+      },
+      "else": {
+        "op": "div",
+        "left": {
+          "op": "var",
+          "name": "numer_b"
+        },
+        "right": {
+          "op": "var",
+          "name": "denom_b"
+        }
+      }
+    },
+    "pay_b_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "pay_b_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "pay_b": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "pay_b_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "ms_raw": {
+      "op": "sub",
+      "left": {
+        "op": "var",
+        "name": "pay_a"
+      },
+      "right": {
+        "op": "var",
+        "name": "pay_b"
+      }
+    },
+    "ms_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "ms_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "monthly_saving": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "ms_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "ts_raw": {
+      "op": "mul",
+      "left": {
+        "op": "var",
+        "name": "monthly_saving"
+      },
+      "right": {
+        "op": "var",
+        "name": "term_months"
+      }
+    },
+    "ts_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "ts_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "total_saving": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "ts_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    }
+  },
+  "test_vectors": [
+    {
+      "name": "V1 $25,000 at 7.50% vs 5.90% for 60 months",
+      "inputs": {
+        "loan_amount": 25000,
+        "rate_a": 7.5,
+        "rate_b": 5.9,
+        "term_months": 60
+      },
+      "expect": {
+        "values": {
+          "monthly_saving": 18.79,
+          "pay_a": 500.95,
+          "pay_b": 482.16,
+          "total_saving": 1127.4
+        }
+      },
+      "applied_contains": [
+        "$500.95",
+        "$18.79"
+      ],
+      "note": "rA=0.00625: $25,000 x 0.00625 / (1 - 1.00625^-60) = $500.95; rB=0.0049167: $482.16; saving $18.79/mo, $1,127.40 total."
+    },
+    {
+      "name": "V2 $300,000 at 6.50% vs 5.50% for 360 months",
+      "inputs": {
+        "loan_amount": 300000,
+        "rate_a": 6.5,
+        "rate_b": 5.5,
+        "term_months": 360
+      },
+      "expect": {
+        "values": {
+          "monthly_saving": 192.83,
+          "pay_a": 1896.2,
+          "pay_b": 1703.37,
+          "total_saving": 69418.8
+        }
+      },
+      "applied_contains": [
+        "$1,896.20",
+        "$192.83"
+      ],
+      "note": "rA=0.0054167: $1,896.20/mo; rB=0.0045833: $1,703.37/mo; saving $192.83/mo, $69,418.80 total."
+    },
+    {
+      "name": "V3 $10,000 at 9.00% vs 0% for 36 months (zero-rate branch)",
+      "inputs": {
+        "loan_amount": 10000,
+        "rate_a": 9,
+        "rate_b": 0,
+        "term_months": 36
+      },
+      "expect": {
+        "values": {
+          "monthly_saving": 40.22,
+          "pay_a": 318,
+          "pay_b": 277.78,
+          "total_saving": 1447.92
+        }
+      },
+      "applied_contains": [
+        "$277.78",
+        "$40.22"
+      ],
+      "note": "Rate A: $318.00/mo; rate B 0% pays $10,000 / 36 = $277.78/mo; saving $40.22/mo, $1,447.92 total."
+    },
+    {
+      "name": "V4 rate B above rate A (not eligible)",
+      "inputs": {
+        "loan_amount": 20000,
+        "rate_a": 5,
+        "rate_b": 6,
+        "term_months": 48
+      },
+      "expect": {
+        "eligible": false,
+        "gate": "lower_rate_b"
+      },
+      "note": "Rate B 6.00% is above rate A 5.00%, so switching saves nothing."
+    },
+    {
+      "name": "V5 $5,000 at 12.00% vs 8.00% for 24 months",
+      "inputs": {
+        "loan_amount": 5000,
+        "rate_a": 12,
+        "rate_b": 8,
+        "term_months": 24
+      },
+      "expect": {
+        "values": {
+          "monthly_saving": 9.23,
+          "pay_a": 235.37,
+          "pay_b": 226.14,
+          "total_saving": 221.52
+        }
+      },
+      "applied_contains": [
+        "$235.37",
+        "$9.23"
+      ],
+      "note": "rA=0.01: $235.37/mo; rB=0.0066667: $226.14/mo; saving $9.23/mo, $221.52 total."
+    }
+  ],
+  "title": "Loan monthly-payment comparison calculator",
+  "version": 1,
+  "schema": "calc_spec/v1"
+}

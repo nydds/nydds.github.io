@@ -1,0 +1,415 @@
+{
+  "description": "Compare what your savings earn at your current APY versus a higher APY over a number of months. Simple-interest estimate: balance x APY x months/12, rounded to the nearest cent. The FDIC national average savings APY was 0.39% in November 2026, while many high-yield accounts paid around 4%.",
+  "eligibility_gates": [
+    {
+      "id": "higher_rate",
+      "when": {
+        "op": "le",
+        "left": {
+          "op": "var",
+          "name": "new_apy"
+        },
+        "right": {
+          "op": "var",
+          "name": "current_apy"
+        }
+      },
+      "reason": "The new APY is not higher than your current APY, so switching earns no extra interest.",
+      "alternative": "Enter a new APY above your current APY to compare."
+    },
+    {
+      "id": "positive_principal",
+      "when": {
+        "op": "le",
+        "left": {
+          "op": "var",
+          "name": "principal"
+        },
+        "right": {
+          "op": "const",
+          "value": 0
+        }
+      },
+      "reason": "Enter a savings balance above $0.",
+      "alternative": "Enter your current savings balance."
+    }
+  ],
+  "id": "EN-APY-001",
+  "inputs": [
+    {
+      "default": 10000,
+      "key": "principal",
+      "label": "Savings balance ($)",
+      "max": 100000000,
+      "min": 0,
+      "step": 100,
+      "type": "number"
+    },
+    {
+      "default": 0.39,
+      "key": "current_apy",
+      "label": "Current APY (%)",
+      "max": 20,
+      "min": 0,
+      "step": 0.01,
+      "type": "number"
+    },
+    {
+      "default": 4,
+      "key": "new_apy",
+      "label": "New APY (%)",
+      "max": 20,
+      "min": 0,
+      "step": 0.01,
+      "type": "number"
+    },
+    {
+      "default": 12,
+      "key": "months",
+      "label": "Months to compare",
+      "max": 360,
+      "min": 1,
+      "step": 1,
+      "type": "number"
+    }
+  ],
+  "outputs": {
+    "applied": [
+      {
+        "text": "At your current APY you earn {interest_current|usd} in {months|raw} months."
+      },
+      {
+        "text": "At the new APY you earn {interest_new|usd} in {months|raw} months."
+      },
+      {
+        "text": "Switching earns you {extra|usd} more."
+      }
+    ],
+    "caution": {
+      "text": "Simple-interest estimate: balance x APY x months/12, rounded to the nearest cent. Real accounts compound (often monthly) and APYs change, so your bank's actual interest may differ slightly. Not financial advice."
+    },
+    "headline": {
+      "label": "Extra interest by switching",
+      "value": {
+        "op": "var",
+        "name": "extra"
+      },
+      "format": "usd"
+    },
+    "rows": [
+      {
+        "label": "Savings balance",
+        "value": {
+          "op": "var",
+          "name": "principal"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Interest at current APY",
+        "value": {
+          "op": "var",
+          "name": "interest_current"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Interest at new APY",
+        "value": {
+          "op": "var",
+          "name": "interest_new"
+        },
+        "format": "usd"
+      },
+      {
+        "label": "Extra interest by switching",
+        "value": {
+          "op": "var",
+          "name": "extra"
+        },
+        "format": "usd"
+      }
+    ]
+  },
+  "sources": [
+    {
+      "label": "FDIC national average savings rate, November 2026 (0.39% APY) — via NerdWallet",
+      "url": "https://www.nerdwallet.com/banking/learn/average-rates-for-deposit-accounts?trk_channel=web&trk_copy=Average+Bank+Interest+Rates+for+Savings+Accounts%2C+CDs+and+More&trk_element=hyperlink&trk_elementPosition=8&trk_location=PostList&trk_subLocation=tiles"
+    },
+    {
+      "label": "Average savings account interest rate, November 2026 (FDIC data) — Motley Fool",
+      "url": "https://www.fool.com/money/research/average-savings-account-interest-rate/"
+    }
+  ],
+  "steps": {
+    "y_current": {
+      "op": "div",
+      "left": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "principal"
+        },
+        "right": {
+          "op": "var",
+          "name": "current_apy"
+        }
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "ic_months": {
+      "op": "mul",
+      "left": {
+        "op": "var",
+        "name": "y_current"
+      },
+      "right": {
+        "op": "var",
+        "name": "months"
+      }
+    },
+    "ic_raw": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "ic_months"
+      },
+      "right": {
+        "op": "const",
+        "value": 12
+      }
+    },
+    "ic_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "ic_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "interest_current": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "ic_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "y_new": {
+      "op": "div",
+      "left": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "principal"
+        },
+        "right": {
+          "op": "var",
+          "name": "new_apy"
+        }
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "in_months": {
+      "op": "mul",
+      "left": {
+        "op": "var",
+        "name": "y_new"
+      },
+      "right": {
+        "op": "var",
+        "name": "months"
+      }
+    },
+    "in_raw": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "in_months"
+      },
+      "right": {
+        "op": "const",
+        "value": 12
+      }
+    },
+    "in_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "in_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "interest_new": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "in_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    },
+    "extra_raw": {
+      "op": "sub",
+      "left": {
+        "op": "var",
+        "name": "interest_new"
+      },
+      "right": {
+        "op": "var",
+        "name": "interest_current"
+      }
+    },
+    "extra_cents": {
+      "op": "round",
+      "value": {
+        "op": "mul",
+        "left": {
+          "op": "var",
+          "name": "extra_raw"
+        },
+        "right": {
+          "op": "const",
+          "value": 100
+        }
+      }
+    },
+    "extra": {
+      "op": "div",
+      "left": {
+        "op": "var",
+        "name": "extra_cents"
+      },
+      "right": {
+        "op": "const",
+        "value": 100
+      }
+    }
+  },
+  "test_vectors": [
+    {
+      "name": "V1 $10,000 at 0.39% vs 4.00% for 12 months",
+      "inputs": {
+        "current_apy": 0.39,
+        "months": 12,
+        "new_apy": 4,
+        "principal": 10000
+      },
+      "expect": {
+        "values": {
+          "extra": 361,
+          "interest_current": 39,
+          "interest_new": 400
+        }
+      },
+      "applied_contains": [
+        "$39.00",
+        "$361.00"
+      ],
+      "note": "$10,000 x 0.39% = $39.00; $10,000 x 4.00% = $400.00; extra $361.00."
+    },
+    {
+      "name": "V2 $5,000 at 0.39% vs 3.50% for 6 months",
+      "inputs": {
+        "current_apy": 0.39,
+        "months": 6,
+        "new_apy": 3.5,
+        "principal": 5000
+      },
+      "expect": {
+        "values": {
+          "extra": 77.75,
+          "interest_current": 9.75,
+          "interest_new": 87.5
+        }
+      },
+      "applied_contains": [
+        "$9.75",
+        "$77.75"
+      ],
+      "note": "$5,000 x 0.39% x 6/12 = $9.75; $5,000 x 3.50% x 6/12 = $87.50; extra $77.75."
+    },
+    {
+      "name": "V3 $25,000 at 0.50% vs 4.25% for 24 months",
+      "inputs": {
+        "current_apy": 0.5,
+        "months": 24,
+        "new_apy": 4.25,
+        "principal": 25000
+      },
+      "expect": {
+        "values": {
+          "extra": 1875,
+          "interest_current": 250,
+          "interest_new": 2125
+        }
+      },
+      "applied_contains": [
+        "$250.00",
+        "$1,875.00"
+      ],
+      "note": "$25,000 x 0.50% x 2 = $250.00; $25,000 x 4.25% x 2 = $2,125.00; extra $1,875.00."
+    },
+    {
+      "name": "V4 new APY below current APY (not eligible)",
+      "inputs": {
+        "current_apy": 4,
+        "months": 12,
+        "new_apy": 3,
+        "principal": 10000
+      },
+      "expect": {
+        "eligible": false,
+        "gate": "higher_rate"
+      },
+      "note": "New APY 3.00% is below current 4.00%, so switching earns nothing extra."
+    },
+    {
+      "name": "V5 $12,345 at 0.39% vs 4.00% for 7 months (rounding)",
+      "inputs": {
+        "current_apy": 0.39,
+        "months": 7,
+        "new_apy": 4,
+        "principal": 12345
+      },
+      "expect": {
+        "values": {
+          "extra": 259.97,
+          "interest_current": 28.08,
+          "interest_new": 288.05
+        }
+      },
+      "applied_contains": [
+        "$28.08",
+        "$259.97"
+      ],
+      "note": "Current: $12,345 x 0.39% x 7/12 = $28.084875 -> $28.08; new: $12,345 x 4.00% x 7/12 = $288.05; extra $259.97."
+    }
+  ],
+  "title": "Savings APY comparison calculator",
+  "version": 1,
+  "schema": "calc_spec/v1"
+}
