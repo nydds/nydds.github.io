@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://nydds.github.io/sitemap.xml
+Sitemap: https://nydds.github.io/smb-tools/sitemap.xml
